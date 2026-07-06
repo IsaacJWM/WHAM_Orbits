@@ -4,6 +4,8 @@ import Jack_Code.WHAMField as WHAMField
 import numpy as np
 import sys
 from concurrent.futures import ProcessPoolExecutor
+from scipy.stats import maxwell
+from scipy.stats import uniform_direction
 
 sys.path.insert(0, "./classes")
 
@@ -38,12 +40,10 @@ def new_run_position(position,bFunc,vertices,norbits=100,nvel=100,dt=0.01,no_chu
     """
 
     xloc,yloc,zloc = position
-
-    xvel = ps.select_velocities(nvel=nvel)
-    yvel = ps.select_velocities(nvel=nvel)
-    zvel = ps.select_velocities(nvel=nvel)
-
-    velocities = zip(xvel,yvel,zvel)
+    
+    vmag = maxwell.rvs(nvel)
+    vhat = uniform_direction.rvs(3,nvel)
+    velocities = (vhat * vmag).T
 
     #Run particle starting at POSITION at each of the initial velocities
     for ii,v0 in enumerate(velocities):
