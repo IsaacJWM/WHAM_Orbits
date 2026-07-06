@@ -55,7 +55,7 @@ class particle(object):
         the boundary of confined particles.
         Used to set the boundary of our container
         '''
-        self.bound = Polygon([vertices])
+        self.bound = Polygon(vertices)
 
     def step(self, B, noOfSteps, E=Fields.nullField):
         '''
@@ -155,11 +155,11 @@ class particle(object):
                 self.Bfield.append(B(self.r[ii], self.iter * self.dt))
 
                 self.iter += 1
-
+                
             # now save these time points to disk and set up new v and r arrays
             # with the inital value being the value at the current iteration to save memory
 
-
+            
             self.iter_time = (time.time() - start) / self.iter
 
             if self.write_data:

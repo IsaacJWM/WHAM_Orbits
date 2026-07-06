@@ -1,6 +1,6 @@
 import particle_sieve as ps
 #import taylor_field_tools as tft
-import Jack_Code.WHAMField as WHAMField
+import WHAMField
 import numpy as np
 import sys
 from concurrent.futures import ProcessPoolExecutor
@@ -41,12 +41,13 @@ def new_run_position(position,bFunc,vertices,norbits=100,nvel=100,dt=0.01,no_chu
 
     xloc,yloc,zloc = position
     
-    vmag = maxwell.rvs(nvel)
+    vmag = maxwell.rvs(size=nvel)
     vhat = uniform_direction.rvs(3,nvel)
-    velocities = (vhat * vmag).T
+    velocities = vhat * vmag[:, np.newaxis]
 
     #Run particle starting at POSITION at each of the initial velocities
     for ii,v0 in enumerate(velocities):
+
         if no_chunks:
             dump_size = norbits/dt
         else:
@@ -67,7 +68,7 @@ def new_run_position(position,bFunc,vertices,norbits=100,nvel=100,dt=0.01,no_chu
     return list(velocities)
 
 
-def RunTrajectories(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
+def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
                     shaper=(0,0.4), shapez=(-1,1), filename='data//WHAMTest//Test_1'):
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
@@ -76,10 +77,15 @@ def RunTrajectories(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=
     shapez *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     bufferr = shaper[1] / 10
     bufferz = shapez[1] / 10
-    rr = np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 5, endpoint=True)
-    zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 10, endpoint=True)
+    rr = np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 4, endpoint=True)
+    zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 8, endpoint=True)
+    
+    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
 
-    # Build a flat list of all (rloc, zloc) combinations
+    #for r in rr:
+    #    for z in zz:
+    #        new_run_position([0,r,z], field_data.field, vertices, norbits, nvel, dt, 
+    #                         True, filename+'_r'+str(round(r))+'_z'+str(round(z)))
     all_args = [
         ([0, rloc, zloc], field_data.field, vertices, norbits, nvel, dt, 
          True,filename+'_r'+str(round(rloc))+'_z'+str(round(zloc)))
