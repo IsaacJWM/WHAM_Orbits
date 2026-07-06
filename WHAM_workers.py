@@ -1,11 +1,14 @@
 import particle_sieve as ps
-#import taylor_field_tools as tft
+import taylor_field_tools as tft
 import WHAMField
 import numpy as np
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from scipy.stats import maxwell
 from scipy.stats import uniform_direction
+import os
+import h5py
+import matplotlib.pyplot as plt
 
 sys.path.insert(0, "./classes")
 
@@ -41,7 +44,7 @@ def new_run_position(position,bFunc,vertices,norbits=100,nvel=100,dt=0.01,no_chu
 
     xloc,yloc,zloc = position
     
-    vmag = maxwell.rvs(size=nvel)
+    vmag = maxwell.rvs(scale=np.sqrt(np.pi/8),size=nvel)
     vhat = uniform_direction.rvs(3,nvel)
     velocities = vhat * vmag[:, np.newaxis]
 
@@ -101,3 +104,87 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
             except Exception as e:
                 print(f"Worker failed with: {type(e).__name__}: {e}")
                 break
+
+
+def plot_z_vs_t(file_path):
+    file = file_path.split("/")[-1]
+    with h5py.File(file_path, mode='r') as ff:
+        for i, v in enumerate(ff.keys()):
+            plt.plot(list(range(ff[v]["iter"][0])), ff[v]['r'][:,2])
+            plt.xlabel("Iteration")
+            plt.ylabel("Z-position")
+            plt.title(f"File {file}, Particle number {i}")
+            plt.show()
+            
+def plot_trajectory(file_path):
+    file = file_path.split("/")[-1]
+    with h5py.File(file_path, mode='r') as ff:
+        for i, v in enumerate(ff.keys()):
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(*ff[v]['r'][:].T, c=np.arange(ff[v]['iter'][0]), cmap='viridis', s=2)
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+            ax.set_zlabel("z")
+            plt.title(f"File {file}, Particle number {i}")
+            plt.show()
+
+
+
+
+def plot_trajectories(file_list, velocities_by_file = None,
+    data_directory = '/Volumes/alight/trajectory_merge_6524539_7294312_10186475/', image_directory='/Users/alight/Dropbox/python/particle_orbits/data/trajectory_images/',
+    image_folder_prefix=None, image_subdir='default_subdir',
+    v_min=0.0, save_plots=True):
+    """
+    Takes list of filenames and initial velocity values for a set of
+    particles and plots the trajectory corresponding to each.
+
+    By default all velocity indices in each file are plotted.
+
+    To choose specific velocity indices in each file, VELOCITIES_BY_FILE
+    is provided as a list of velocities for each vile in FILE_LIST.
+
+    """
+
+
+    for ii, datafile in enumerate(file_list):
+
+        fname = datafile.split('/')[-1]
+        if image_folder_prefix is not None:
+            image_subdir = os.path.join(image_directory,image_folder_prefix+fname[13:25])
+            try:
+                os.mkdir(image_subdir)
+            except FileExistsError:
+                pass
+        else:
+            pass
+
+
+        with h5py.File(os.path.join(data_directory,datafile), mode='r') as ff:
+            if velocities_by_file is None:
+                vi_list = ff.keys()
+            else:
+                vi_list = velocities_by_file[ii]
+
+            for vlabel in vi_list:
+                v_mag = np.sqrt((ff[vlabel]['v'][0]**2).sum())
+                if v_mag < v_min:
+                    continue
+
+                #set up axis
+                fig = plt.gcf()
+                fig.clf()
+                ax = fig.add_subplot(111, projection='3d')
+
+                zmin = ff[vlabel]['r'][()][:,2].min()
+                zmax = ff[vlabel]['r'][()][:,2].max()
+                ax.set_zlim(0.9*zmin,1.1*zmax)
+                tft.generate_cylinder((0, 0, zmin), (0, 0, zmax), 100, ax=ax)
+                ax.set_title(fname+", "+vlabel+"\nSpeed [v_th] = {:.2f}".format(v_mag), y=1.02)
+
+                #plot trajectory and save image
+                tft.time_as_color_3D(ff[vlabel]['r'][()],ax=ax)
+                if save_plots:
+                    plt.savefig(os.path.join(image_directory,image_subdir,fname.split('.')[0]+'_'+vlabel+'.png'))
+    return ax
