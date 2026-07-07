@@ -26,6 +26,8 @@ class WHAMField:
 
         self.Br_interp = LinearNDInterpolator(br_data[:, 0:2], br_data[:, 2])
         self.Bz_interp = LinearNDInterpolator(bz_data[:, 0:2], bz_data[:, 2])
+        
+        print("WHAMField module loaded")
 
     def field(self, pos, t=0):
         x, y, z = pos
@@ -50,4 +52,3 @@ class WHAMField:
 
         return np.array([Bx, By, Bz])
     
-print("WHAMField module loaded")
