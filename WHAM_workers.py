@@ -6,10 +6,13 @@ import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from scipy.stats import maxwell
 from scipy.stats import uniform_direction
+from scipy.ndimage import gaussian_filter1d
 import os
 import h5py
 import matplotlib.pyplot as plt
 import time
+import orbit_statistics
+import seaborn as sns
 
 sys.path.insert(0, "./classes")
 
@@ -99,7 +102,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
         elapsed = time.perf_counter() - start_time
         print(f"{nw} workers: {elapsed:.1f}s")
         
-def plot_z_vs_t(file_path):
+def plot_z_vs_t(file_path, savedir=None):
     file = file_path.split("/")[-1]
     with h5py.File(file_path, mode='r') as ff:
         for i, v in enumerate(ff.keys()):
@@ -107,9 +110,11 @@ def plot_z_vs_t(file_path):
             plt.xlabel("Iteration")
             plt.ylabel("Z-position")
             plt.title(f"File {file}, Particle number {i}")
+            if savedir != None:
+                plt.savefig(savedir)
             plt.show()
             
-def plot_trajectory(file_path):
+def plot_trajectory(file_path, savedir=None):
     file = file_path.split("/")[-1]
     with h5py.File(file_path, mode='r') as ff:
         for i, v in enumerate(ff.keys()):
@@ -120,9 +125,11 @@ def plot_trajectory(file_path):
             ax.set_ylabel("y")
             ax.set_zlabel("z")
             plt.title(f"File {file}, Particle number {i}")
+            if savedir != None:
+                plt.savefig(savedir)
             plt.show()
 
-def plot_zs_vs_t(directory, confined=True):
+def plot_zs_vs_t(directory, confined=True, savedir=None):
     files = os.listdir(directory)
     for file in files:
         if (file.endswith("_confined.h5") and confined) or (file.endswith("_escaped.h5") and not confined):
@@ -132,9 +139,11 @@ def plot_zs_vs_t(directory, confined=True):
     plt.xlabel("Iteration")
     plt.ylabel("Z-position")
     plt.title("Particle positions vs time")
+    if savedir != None:
+        plt.savefig(savedir)
     plt.show()
 
-def plot_trajectories(directory, confined=True):
+def plot_trajectories(directory, confined=True, savedir=None):
     files = os.listdir(directory)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -147,6 +156,8 @@ def plot_trajectories(directory, confined=True):
     ax.set_ylabel("y")
     ax.set_zlabel("z")
     plt.title("Particle trajectories")
+    if savedir != None:
+        plt.savefig(savedir)
     plt.show()
 
 def get_fraction_lost(directory):
@@ -155,12 +166,175 @@ def get_fraction_lost(directory):
     escaped = 0
     for file in files:
         if file.endswith('_confined.h5'):
-            confined += 1
+            with h5py.File(os.path.join(directory, file), mode='r') as ff:
+                for _ in ff.keys():
+                    confined += 1
         elif file.endswith('_escaped.h5'):
-            escaped += 1
+            with h5py.File(os.path.join(directory, file), mode='r') as ff:
+                for _ in ff.keys():
+                    escaped += 1
     frac_confined = confined / (confined + escaped)
     print(f"Total confined: {confined}")
     print(f"Total escaped: {escaped}")
     print(f"Fraction confined: {frac_confined}")
+
+def confined_in_vperp_vpar_space(directory, savedir=None):
+    files = os.listdir(directory)
+    confined = [[],[]]
+    escaped = [[],[]]
+    for file in files:
+        if file.endswith('_confined.h5'):
+            with h5py.File(os.path.join(directory, file), mode='r') as ff:
+                for i, v in enumerate(ff.keys()):
+                    v0 = ff[v]['v'][0]
+                    vpar = np.abs(v0[2])
+                    vperp = np.sqrt(v0[0]**2 + v0[1]**2)
+                    confined[0].append(vpar)
+                    confined[1].append(vperp)
+        elif file.endswith('_escaped.h5'):
+            with h5py.File(os.path.join(directory, file), mode='r') as ff:
+                for i, v in enumerate(ff.keys()):
+                    v0 = ff[v]['v'][0]
+                    vpar = np.abs(v0[2])
+                    vperp = np.sqrt(v0[0]**2 + v0[1]**2)
+                    escaped[0].append(vpar)
+                    escaped[1].append(vperp)
+                    
+    plt.plot(confined[0], confined[1], 'o', label="Confined", color='blue')
+    plt.plot(escaped[0], escaped[1], 'x', label="Escaped", color='red')
+    plt.xlabel('Normalized Parallel Velocity')
+    plt.ylabel('Normalized Perpendicular Velocity')
+    plt.title('Confinement by Position in Velocity Space')
+    plt.legend()
+    if savedir != None:
+        plt.savefig(savedir)
+    plt.show()
+
+def confinement_over_time(directory, smooth=True, savedir=None):
+    _, _, _, _, tfinal, _ = orbit_statistics.read_single_position_files(directory, read_escaped=False, save_output=False)
+    _, _, _, _, tlost, _ = orbit_statistics.read_single_position_files(directory, read_escaped=True, save_output=False)
+    
+    tlost = np.sort(np.array(tlost))
+    survival = 1 - np.arange(1, len(tlost) + 1) / (len(tlost) + len(tfinal))
+    
+    times = np.concatenate([[0], tlost, [tfinal[0]]])
+    survival = np.concatenate([[1], survival, [survival[-1]]])
+
+    t_fine = np.linspace(0, tfinal[0], 10000)
+    survival_fine = np.interp(t_fine, times, survival)
+    
+    survival_smooth = gaussian_filter1d(survival_fine, sigma=100)
+    
+    fig, ax = plt.subplots(figsize=(8, 5))
+    if smooth:
+        ax.plot(t_fine, survival_smooth, color='steelblue', linewidth=2.5, label='Confined fraction')
+    else:
+        ax.plot(times, survival, color='steelblue', linewidth=2.5, label='Confined fraction')
+     
+    ax.fill_between(t_fine, survival_smooth, alpha=0.15, color='steelblue')
+    
+    ax.set_xlabel('Time (normalized)', fontsize=13)
+    ax.set_ylabel('Proportion of Particles Confined', fontsize=13)
+    ax.set_title("Particle confinement over time", fontsize=14)
+    ax.set_xlim(0, tfinal[0])
+    ax.set_ylim(0, 1.02)
+    ax.tick_params(labelsize=11)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.legend(fontsize=11)
+    plt.tight_layout()
+    if savedir != None:
+        plt.savefig(savedir)
+    plt.show()
+        
+def plot_confinement_with_fieldlines(directory, bFunc, savedir=None):
+    r = []
+    z = []
+    pconf = []
+    
+    conf_pos, _, _, _, _, _ = orbit_statistics.read_single_position_files(directory, read_escaped=False, save_output=False)
+    esc_pos, _, _, _, _, _ = orbit_statistics.read_single_position_files(directory, read_escaped=True, save_output=False)
+    
+    unique_conf_pos, conf_counts = np.unique(conf_pos, return_counts=True)
+    conf_dict = dict(zip(unique_conf_pos, conf_counts))
+    unique_esc_pos, esc_counts = np.unique(esc_pos, return_counts=True)
+    esc_dict = dict(zip(unique_esc_pos, esc_counts))
+    
+    pos = np.unique(np.concatenate((unique_conf_pos, unique_esc_pos)))
+    for x, y, z in pos:
+        r.append(np.sqrt(x**2 + y**2))
+        z.append(z)
+        pconf.append(conf_dict[np.array([x,y,z])])
+        
+    
+    
+    # ----------------------------------------------------------------
+    # 1. Compute magnetic field on the r-z grid for streamplot
+    # ----------------------------------------------------------------
+    Z, R = np.meshgrid(zz, rr)
+    BR = np.zeros_like(R)
+    BZ = np.zeros_like(Z)
+
+    for i in range(len(rr)):
+        for j in range(len(zz)):
+            B = bFunc(rr[i], 0, zz[j])
+            BR[i, j] = B[0]
+            BZ[i, j] = B[2]
+
+    # ----------------------------------------------------------------
+    # 2. Flatten grid and confinement data for scatter plot
+    # ----------------------------------------------------------------
+    z_points = Z.ravel()
+    r_points = R.ravel()
+    c_points = confinement_data.ravel()  # confinement % at each point
+
+    # ----------------------------------------------------------------
+    # 3. Build the plot
+    # ----------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # --- Confinement scatter plot ---
+    sc = ax.scatter(
+        z_points, r_points,
+        c=c_points,
+        cmap='plasma',
+        vmin=0, vmax=100,
+        s=30,           # marker size, adjust to taste
+        zorder=2        # draw points on top of field lines
+    )
+    cbar = fig.colorbar(sc, ax=ax, label='Particles Confined (%)', pad=0.02)
+    cbar.ax.tick_params(labelsize=10)
+
+    # --- Magnetic field lines ---
+    B_magnitude = np.sqrt(BR**2 + BZ**2)
+    BR_norm = BR / (B_magnitude + 1e-10)
+    BZ_norm = BZ / (B_magnitude + 1e-10)
+
+    ax.streamplot(
+        zz, rr,
+        BZ_norm, BR_norm,
+        color='steelblue',
+        linewidth=1.0,
+        density=1.5,
+        arrowsize=1.0,
+        alpha=0.4,
+        zorder=1        # draw field lines underneath the points
+    )
+
+    # ----------------------------------------------------------------
+    # 4. Formatting
+    # ----------------------------------------------------------------
+    ax.set_xlabel('z (normalized)', fontsize=13)
+    ax.set_ylabel('r (normalized)', fontsize=13)
+    ax.set_title('Particle Confinement with Magnetic Field Lines', fontsize=14)
+    ax.set_xlim(zz.min(), zz.max())
+    ax.set_ylim(rr.min(), rr.max())
+    ax.tick_params(labelsize=11)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    plt.show()
+    return fig, ax
 
 
