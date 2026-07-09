@@ -1,15 +1,8 @@
-import matplotlib as mpl
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import sys
-from numpy.core.multiarray import ndarray
-from scipy.special import j0, j1, jn_zeros
 import time
-from scipy.interpolate import RegularGridInterpolator
 import h5py
-import pdb
 from shapely.geometry import Polygon, Point
 
 import Fields

@@ -12,7 +12,6 @@ import h5py
 import matplotlib.pyplot as plt
 import time
 import orbit_statistics
-import seaborn as sns
 import tracemalloc
 
 sys.path.insert(0, "./classes")

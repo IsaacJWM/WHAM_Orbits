@@ -5,8 +5,6 @@ import h5py
 import sys
 import matplotlib.pyplot as plt
 
-from mpl_toolkits.mplot3d import Axes3D
-
 ## Script for running particle confinement sieve
 
 def set_up_grid(nx=8, ny=8, nz=8, xmin=-95, xmax=95, zmin=10, zmax=500, show_plot=False):
@@ -194,43 +192,8 @@ def run_sieve(norbits=100,dt=0.01,test=False,no_chunks=True,
                     if p1.outOfBounds:
                         continue
                     else:
-                        write_data(p1,filename,groupname,nvelocities)
+                        pass
 
-
-def write_all_data(p1,filename,groupname):
-
-    with h5py.File(filename,'w-') as hf:
-        #create a new group if it doesn't already exist
-        try:
-            hf.create_group(groupname)
-            group_exists = False
-        except ValueError:
-            group_exists = True
-
-        #labe group so we can create trajectories inside of it
-        gp = hf[groupname]
-
-        if group_exists:
-            pass
-            #DO WE NEED TO DO SOMETHING ACTIVE FOR APPENDING?
-
-
-
-
-        # subtract 1 from the shape for initial condition
-        # each vector has dimensions (nvelocities,nsteps,3)
-        write_length = np.asarray(self.r).shape[0]
-        rdata = gp.create_dataset("r", (write_length-1,3), maxshape=(None, 3))
-        rdata[:,:] = self.r[:-1]
-        vdata = gp.create_dataset("v", (write_length-1,3), maxshape=(None, 3))
-        vdata[:,:] = self.v[:-1]
-
-        Bdata = gp.create_dataset("B", (write_length-1,3), maxshape=(None, 3))
-        Bdata[:,:] = self.Bfield[:-1]
-
-        hf.create_dataset('iter', data=[self.iter])
-        hf.create_dataset('outOfBounds', data=[self.outOfBounds])
-        hf.create_dataset('dt', data=[self.dt])
 
 
 # Check to see if this file is being executed as the "Main" python
