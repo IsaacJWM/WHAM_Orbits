@@ -101,10 +101,10 @@ def write_single_position_data(p1,filename,groupname,write_mode='w-'):
     try:
         with h5py.File(filename,write_mode) as hf:
             #create a new group if it doesn't already exist
-            try:
-                gp = hf.create_group(groupname)
-            except ValueError:
+            while groupname in hf.keys():
                 print("Duplicate group name: "+groupname)
+                groupname = 'v' + str(float(groupname[1:]) + 0.001)
+            gp = hf.create_group(groupname)
 
             gp.create_dataset('r',data=p1.r[:-1])
             gp.create_dataset('v',data=p1.v[:-1])

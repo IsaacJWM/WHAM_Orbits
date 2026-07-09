@@ -144,16 +144,21 @@ class mem_eff_particle(object):
                     # quit the loop
                     break
 
-                half_electrical_impulse = q * self.dt * E(self.r[ii], self.iter * self.dt) / (2 * m)
-                v_minus = self.v[ii] + half_electrical_impulse
+                #half_electrical_impulse = q * self.dt * E(self.r[ii], self.iter * self.dt) / (2 * m)
+                #v_minus = self.v[ii] + half_electrical_impulse
 
+                #t_help = q * self.dt * B(self.r[ii], self.iter * self.dt) / (2 * m)
+                #v_prime = v_minus + np.cross(v_minus, t_help)
+
+                #s_help = 2 * t_help / (1 + np.linalg.norm(t_help) ** 2)
+                #v_plus = v_minus + np.cross(v_prime, s_help)
+
+                #self.v[ii+1] = v_plus + half_electrical_impulse
+                
                 t_help = q * self.dt * B(self.r[ii], self.iter * self.dt) / (2 * m)
-                v_prime = v_minus + np.cross(v_minus, t_help)
-
-                s_help = 2 * t_help / (1 + np.linalg.norm(t_help) ** 2)
-                v_plus = v_minus + np.cross(v_prime, s_help)
-
-                self.v[ii+1] = v_plus + half_electrical_impulse
+                v_prime = self.v[ii] + np.cross(self.v[ii], t_help)
+                
+                self.v[ii+1] = self.v[ii] + np.cross(v_prime, 2 * t_help / (1 + np.linalg.norm(t_help) ** 2))
                 self.r[ii+1] = self.r[ii] + self.dt * self.v[ii + 1]
                 self.Bfield[ii+1] = B(self.r[ii], self.iter * self.dt)
 

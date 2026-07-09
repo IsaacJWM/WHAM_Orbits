@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import time
 import orbit_statistics
 import seaborn as sns
+import tracemalloc
 
 sys.path.insert(0, "./classes")
 
@@ -36,29 +37,39 @@ def new_run_position(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,
     Takes a single input position (x,y,z) in grid units and runs particles
     at NVEL velocities sampled from a normal distribution
     """
+    
+    tracemalloc.start()
+    
+    try:
+        xloc,yloc,zloc = position
+    
+        vx = ps.select_velocities(1)
+        vy = ps.select_velocities(1)
+        vz = ps.select_velocities(1)
+    
+        if no_chunks:
+            dump_size = norbits/dt
+        else:
+            dump_size = None
+                
+        p1 = new_run_particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], bFunc, vertices, 
+            norbits=norbits, dt=dt, dump_size=dump_size, write_data=False)
 
-    xloc,yloc,zloc = position
+        #print("Approximate run time is {:d} velocities x {:e} iterations x {:1.4f} seconds per iteration = {:4.2f}".format(nvel, norbits/dt, p1.iter_time, nvel*norbits*p1.iter_time/dt))
     
-    vx = ps.select_velocities(1)
-    vy = ps.select_velocities(1)
-    vz = ps.select_velocities(1)
-    
-    if no_chunks:
-        dump_size = norbits/dt
-    else:
-        dump_size = None
-    
-    p1 = new_run_particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], bFunc, vertices, 
-                          norbits=norbits, dt=dt, dump_size=dump_size, write_data=False)
-
-    #print("Approximate run time is {:d} velocities x {:e} iterations x {:1.4f} seconds per iteration = {:4.2f}".format(nvel, norbits/dt, p1.iter_time, nvel*norbits*p1.iter_time/dt))
-    
-    if p1.outOfBounds:
-        filename = filename + "_escaped.h5"
-    else:
-        filename = filename + "_confined.h5"
+        if p1.outOfBounds:
+            filename = filename + "_escaped.h5"
+        else:
+            filename = filename + "_confined.h5"
         
-    return p1, filename, vx[0]
+        return p1, filename, vx[0]
+    except MemoryError:
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        print("MemoryError in worker. Top allocations:")
+        for stat in top_stats[:20]:
+            print(stat)
+        raise MemoryError
 
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
@@ -70,8 +81,8 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     shapez *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     bufferr = shaper[1] / 10
     bufferz = shapez[1] / 10
-    rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 4, endpoint=True), nvel)
-    zz = np.repeat(np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 8, endpoint=True), nvel)
+    rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 5, endpoint=True), nvel)
+    zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 20, endpoint=True)
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
@@ -87,20 +98,22 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
         for rloc in rr
         ]
     
-    for nw in [4, 8, 16]:
-        start_time = time.perf_counter()
-        with ProcessPoolExecutor(max_workers=nw) as executor:
-            futures = {executor.submit(new_run_position, *args): args for args in all_args}
-            for future in as_completed(futures):
-                try:
-                    particle, filename, v = future.result()  # this re-raises the actual exception from the worker
-                except Exception as e:
-                    print(f"Worker failed with: {type(e).__name__}: {e}")
-                    continue
-                #ps.write_single_position_data(particle,filename,f"v{v:03.3f}",write_mode='a')
+    
+    with ProcessPoolExecutor(max_workers=16) as executor:
+        futures = {executor.submit(new_run_position, *args): args for args in all_args}
+        for future in as_completed(futures):
+            try:
+                particle, filename, v = future.result()  # this re-raises the actual exception from the worker
+                ps.write_single_position_data(particle,filename,f"v{v:03.3f}",write_mode='a')
                 del particle
-        elapsed = time.perf_counter() - start_time
-        print(f"{nw} workers: {elapsed:.1f}s")
+            except Exception as e:
+                print(f"Worker failed with: {type(e).__name__}: {e}")
+                if e == MemoryError:
+                    
+                    break
+                continue
+           
+        
         
 def plot_z_vs_t(file_path, savedir=None):
     file = file_path.split("/")[-1]
@@ -113,6 +126,7 @@ def plot_z_vs_t(file_path, savedir=None):
             if savedir != None:
                 plt.savefig(savedir)
             plt.show()
+            plt.close()
             
 def plot_trajectory(file_path, savedir=None):
     file = file_path.split("/")[-1]
@@ -128,6 +142,7 @@ def plot_trajectory(file_path, savedir=None):
             if savedir != None:
                 plt.savefig(savedir)
             plt.show()
+            plt.close()
 
 def plot_zs_vs_t(directory, confined=True, savedir=None):
     files = os.listdir(directory)
@@ -142,6 +157,7 @@ def plot_zs_vs_t(directory, confined=True, savedir=None):
     if savedir != None:
         plt.savefig(savedir)
     plt.show()
+    plt.close()
 
 def plot_trajectories(directory, confined=True, savedir=None):
     files = os.listdir(directory)
@@ -159,6 +175,7 @@ def plot_trajectories(directory, confined=True, savedir=None):
     if savedir != None:
         plt.savefig(savedir)
     plt.show()
+    plt.close(fig)
 
 def get_fraction_lost(directory):
     files = os.listdir(directory)
@@ -209,6 +226,7 @@ def confined_in_vperp_vpar_space(directory, savedir=None):
     if savedir != None:
         plt.savefig(savedir)
     plt.show()
+    plt.close()
 
 def confinement_over_time(directory, smooth=True, savedir=None):
     _, _, _, _, tfinal, _ = orbit_statistics.read_single_position_files(directory, read_escaped=False, save_output=False)
