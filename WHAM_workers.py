@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import time
 import orbit_statistics
 import tracemalloc
+import pandas as pd
 
 sys.path.insert(0, "./classes")
 
@@ -72,7 +73,7 @@ def new_run_position(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,
 
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
-                    shaper=(0,0.4), shapez=(-1,1), filename='data//WHAMTest//Memory_test//'):
+                    shaper=(0,0.4), shapez=(-1,1), filename='data//WHAMTest//Storage_test//'):
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
@@ -104,6 +105,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
             try:
                 particle, filename, v = future.result()  # this re-raises the actual exception from the worker
                 ps.write_single_position_data(particle,filename,f"v{v:03.3f}",write_mode='a')
+                print("Finished", filename, v)
                 del particle
             except Exception as e:
                 print(f"Worker failed with: {type(e).__name__}: {e}")
@@ -216,10 +218,10 @@ def confined_in_vperp_vpar_space(directory, savedir=None):
                     escaped[0].append(vpar)
                     escaped[1].append(vperp)
                     
-    plt.plot(confined[0], confined[1], 'o', label="Confined", color='blue')
-    plt.plot(escaped[0], escaped[1], 'x', label="Escaped", color='red')
-    plt.xlabel('Normalized Parallel Velocity')
-    plt.ylabel('Normalized Perpendicular Velocity')
+    plt.plot(confined[1], confined[0], 'o', label="Confined", color='blue')
+    plt.plot(escaped[1], escaped[0], 'x', label="Escaped", color='red')
+    plt.ylabel('Normalized Parallel Velocity')
+    plt.xlabel('Normalized Perpendicular Velocity')
     plt.title('Confinement by Position in Velocity Space')
     plt.legend()
     if savedir != None:
@@ -264,86 +266,67 @@ def confinement_over_time(directory, smooth=True, savedir=None):
         plt.savefig(savedir)
     plt.show()
         
-def plot_confinement_with_fieldlines(directory, bFunc, savedir=None):
-    r = []
-    z = []
-    pconf = []
-    
+def plot_confinement_with_fieldlines(directory, bFunc, scale=1/0.000102, savedir=None):
     conf_pos, _, _, _, _, _ = orbit_statistics.read_single_position_files(directory, read_escaped=False, save_output=False)
     esc_pos, _, _, _, _, _ = orbit_statistics.read_single_position_files(directory, read_escaped=True, save_output=False)
     
-    unique_conf_pos, conf_counts = np.unique(conf_pos, return_counts=True)
-    conf_dict = dict(zip(unique_conf_pos, conf_counts))
-    unique_esc_pos, esc_counts = np.unique(esc_pos, return_counts=True)
-    esc_dict = dict(zip(unique_esc_pos, esc_counts))
+    unique_pos = np.unique(np.concatenate([conf_pos, esc_pos]), axis=0)
     
-    pos = np.unique(np.concatenate((unique_conf_pos, unique_esc_pos)))
-    for x, y, z in pos:
-        r.append(np.sqrt(x**2 + y**2))
-        z.append(z)
-        pconf.append(conf_dict[np.array([x,y,z])])
-        
+    df = pd.DataFrame(columns=['r', 'z', 'conf'])
+    for pos in unique_pos:
+        r = np.sqrt(pos[0]**2 + pos[1]**2)
+        n_conf = np.count_nonzero(np.count_nonzero(conf_pos == pos, axis=1) == 3)
+        n_esc = np.count_nonzero(np.count_nonzero(esc_pos == pos, axis=1) == 3)
+        temp_df = pd.DataFrame({'r': [r], 'z': [pos[2]], 'conf': [n_conf / (n_conf + n_esc)]})
+        df = pd.concat([df, temp_df])
     
-    
-    # ----------------------------------------------------------------
-    # 1. Compute magnetic field on the r-z grid for streamplot
-    # ----------------------------------------------------------------
+    rr = np.linspace(0, 0.2 * scale, 100)
+    zz = np.linspace(-1 * scale, 1 * scale, 1000)
     Z, R = np.meshgrid(zz, rr)
     BR = np.zeros_like(R)
     BZ = np.zeros_like(Z)
-
-    for i in range(len(rr)):
-        for j in range(len(zz)):
-            B = bFunc(rr[i], 0, zz[j])
+    
+    for i in range(len(rr)-1):
+        for j in range(len(zz)-1):
+            B = bFunc([rr[i], 0, zz[j]])
             BR[i, j] = B[0]
             BZ[i, j] = B[2]
-
-    # ----------------------------------------------------------------
-    # 2. Flatten grid and confinement data for scatter plot
-    # ----------------------------------------------------------------
-    z_points = Z.ravel()
-    r_points = R.ravel()
-    c_points = confinement_data.ravel()  # confinement % at each point
-
-    # ----------------------------------------------------------------
-    # 3. Build the plot
-    # ----------------------------------------------------------------
+    
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # --- Confinement scatter plot ---
     sc = ax.scatter(
-        z_points, r_points,
-        c=c_points,
-        cmap='plasma',
-        vmin=0, vmax=100,
-        s=30,           # marker size, adjust to taste
+        df['z'], df['r'],
+        c=df['conf'],
+        cmap='plasma_r',
+        vmin=0, vmax=1,
+        s=50,           # marker size, adjust to taste
         zorder=2        # draw points on top of field lines
     )
     cbar = fig.colorbar(sc, ax=ax, label='Particles Confined (%)', pad=0.02)
     cbar.ax.tick_params(labelsize=10)
-
+    
     # --- Magnetic field lines ---
     B_magnitude = np.sqrt(BR**2 + BZ**2)
     BR_norm = BR / (B_magnitude + 1e-10)
     BZ_norm = BZ / (B_magnitude + 1e-10)
-
+    
     ax.streamplot(
         zz, rr,
         BZ_norm, BR_norm,
         color='steelblue',
         linewidth=1.0,
-        density=1.5,
+        density=1,
         arrowsize=1.0,
-        alpha=0.4,
         zorder=1        # draw field lines underneath the points
     )
-
+    
     # ----------------------------------------------------------------
     # 4. Formatting
     # ----------------------------------------------------------------
-    ax.set_xlabel('z (normalized)', fontsize=13)
-    ax.set_ylabel('r (normalized)', fontsize=13)
-    ax.set_title('Particle Confinement with Magnetic Field Lines', fontsize=14)
+    ax.set_xlabel('z (ion gyroradii)', fontsize=13)
+    ax.set_ylabel('r (ion gyroradii)', fontsize=13)
+    ax.set_title('Particle Confinement by Position with Magnetic Field Lines', fontsize=14)
     ax.set_xlim(zz.min(), zz.max())
     ax.set_ylim(rr.min(), rr.max())
     ax.tick_params(labelsize=11)

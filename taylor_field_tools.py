@@ -6,11 +6,7 @@ import sys
 import time
 import os
 
-from datetime import datetime
-from pathlib import Path
 from scipy.linalg import norm
-from scipy.spatial import ConvexHull
-import mpl_toolkits.mplot3d.art3d as art3d
 from scipy.ndimage import median_filter, gaussian_filter1d
 
 sys.path.insert(0, "./classes")
