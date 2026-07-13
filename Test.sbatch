@@ -9,6 +9,7 @@
 #SBATCH --mail-type=END
 #SBATCH --mail-user=isaacwrightmuller@gmail.com
 
+source ~/miniconda3/etc/profile.d/conda.sh
 conda activate particle_orbits
 
 python Firebird_testing.py
