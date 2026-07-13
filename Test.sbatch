@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=Trial 1
+#SBATCH --job-name=Trial_1
 #SBATCH --output=output.txt
 #SBATCH --error=error.txt
 #SBATCH --nodes=1
