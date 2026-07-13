@@ -112,6 +112,8 @@ def write_single_position_data(p1,filename,groupname,write_mode='w-'):
             gp.create_dataset('iter', data=[p1.iter])
             gp.create_dataset('outOfBounds', data=[p1.outOfBounds])
             gp.create_dataset('dt', data=[p1.dt])
+            
+            hf.close()
 
     except IOError as fileerr:
         # for debugging

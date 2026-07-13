@@ -6,9 +6,7 @@ import os
 
 if __name__ == "__main__":
     
-    cwd = os.getcwd()
-    
-    directory = os.path.join(cwd, "./data/Firebird_runs")
+    directory = "./data/Firebird_runs/"
     
     if not os.path.isdir(directory):
         os.mkdir(directory)

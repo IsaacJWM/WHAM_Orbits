@@ -98,8 +98,8 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
         for rloc in rr
         ]
     
-    
-    with ProcessPoolExecutor(max_workers=64) as executor:
+    max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(new_run_position, *args): args for args in all_args}
         count = 0
         for future in as_completed(futures):
