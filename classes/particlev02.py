@@ -6,7 +6,7 @@ from shapely.geometry import Polygon, Point
 
 import Fields
 
-class mem_eff_particle(object):
+class particle(object):
 
     def __init__(self, init_position=None, init_velocity=None, dt=None, nOfSteps=100, dump_size=10000,data_dump_path='./',write_data=True,silent=False):
         '''

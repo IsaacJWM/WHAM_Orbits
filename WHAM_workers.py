@@ -7,6 +7,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from scipy.stats import maxwell
 from scipy.stats import uniform_direction
 from scipy.ndimage import gaussian_filter1d
+from scipy.integrate import solve_ivp
 import os
 import h5py
 import matplotlib.pyplot as plt
@@ -17,60 +18,38 @@ import pandas as pd
 
 sys.path.insert(0, "./classes")
 
-import mem_eff_particle as pt
-    
-
-def new_run_particle(initial_pos, initial_vel, bFunc, vertices, norbits=10, dt=0.1, 
-                     dump_size=10000, write_data=True):
-
-    p1 = pt.mem_eff_particle(initial_pos, initial_vel, dt, int(norbits * 2 * np.pi / dt), dump_size=dump_size,
-                     write_data=write_data, silent=True)
-                    # creating the particle with the given conditions
-    p1.set_boundaries(vertices=vertices)
-    p1.step(bFunc)  #subtract 1 to get nice # of iterations instead of nice # of orbits
-
-    return p1
+import particlev02 as pt
 
 
-def new_run_position(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,filename=None):
+def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,filename=None):
     """
-    Takes a single input position (x,y,z) in grid units and runs particles
-    at NVEL velocities sampled from a normal distribution
+    Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
+    xloc,yloc,zloc = position
     
-    tracemalloc.start()
-    
-    try:
-        xloc,yloc,zloc = position
-    
-        vx = ps.select_velocities(1)
-        vy = ps.select_velocities(1)
-        vz = ps.select_velocities(1)
-    
-        if no_chunks:
-            dump_size = norbits/dt
-        else:
-            dump_size = None
-                
-        p1 = new_run_particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], bFunc, vertices, 
-            norbits=norbits, dt=dt, dump_size=dump_size, write_data=False)
+    vx = ps.select_velocities(1)
+    vy = ps.select_velocities(1)
+    vz = ps.select_velocities(1)
 
-        #print("Approximate run time is {:d} velocities x {:e} iterations x {:1.4f} seconds per iteration = {:4.2f}".format(nvel, norbits/dt, p1.iter_time, nvel*norbits*p1.iter_time/dt))
-    
-        if p1.outOfBounds:
-            filename = filename + "_escaped.h5"
-        else:
-            filename = filename + "_confined.h5"
+    if no_chunks:
+        dump_size = norbits/dt
+    else:
+        dump_size = None
         
-        print(vx[0], vy[0], vz[0])
-        return p1, filename, vx[0]
-    except MemoryError:
-        snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics('lineno')
-        print("MemoryError in worker. Top allocations:")
-        for stat in top_stats[:20]:
-            print(stat)
-        raise MemoryError
+    p1 = pt.particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], bFunc, int(norbits * 2 * np.pi / dt), 
+            dump_size=dump_size, write_data=False, silent=True)
+                        # creating the particle with the given conditions
+    p1.set_boundaries(vertices=vertices)
+    p1.step(bFunc)
+
+    #print("Approximate run time is {:d} velocities x {:e} iterations x {:1.4f} seconds per iteration = {:4.2f}".format(nvel, norbits/dt, p1.iter_time, nvel*norbits*p1.iter_time/dt))
+    
+    if p1.outOfBounds:
+        filename = filename + "_escaped.h5"
+    else:
+        filename = filename + "_confined.h5"
+        
+    return p1, filename, vx[0]
 
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
@@ -101,7 +80,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(new_run_position, *args): args for args in all_args}
+        futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
         count = 0
         for future in as_completed(futures):
             try:
@@ -340,3 +319,102 @@ def plot_confinement_with_fieldlines(directory, bFunc, scale=1/0.000102, savedir
     return fig, ax
 
 
+def plot_confined_by_pitch_angle(directory, savedir=None):
+    n_bins = 50
+    
+    _, _, ivel_conf, _, _, _ = orbit_statistics.read_single_position_files(directory, read_escaped=False, save_output=False)
+    _, _, ivel_esc, _, _, _ = orbit_statistics.read_single_position_files(directory, read_escaped=True, save_output=False)
+    
+    pa_conf = np.arctan(np.sqrt(ivel_conf[:,0]**2 + ivel_conf[:,1]**2) / ivel_conf[:,2])
+    pa_esc = np.arctan(np.sqrt(ivel_esc[:,0]**2 + ivel_esc[:,1]**2) / ivel_esc[:,2])
+    
+    print(pa_conf)
+    
+    bins = np.linspace(-np.pi/2, np.pi/2, n_bins + 1)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    ax.hist(pa_conf, bins=bins, alpha=0.6, color='steelblue', 
+            label=f'Confined (n={len(pa_conf)})', edgecolor='white', linewidth=0.5)
+    ax.hist(pa_esc, bins=bins, alpha=0.6, color='coral',
+            label=f'Escaped (n={len(pa_esc)})', edgecolor='white', linewidth=0.5)
+
+    ax.set_xlabel('Pitch Angle (radians)', fontsize=13)
+    ax.set_ylabel('Count', fontsize=13)
+    ax.set_title('Pitch Angle Distribution: Confined vs Escaped', fontsize=14)
+    ax.legend(fontsize=11)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.tick_params(labelsize=11)
+
+    plt.tight_layout()
+    plt.show()
+    plt.close(fig)
+
+
+
+def plot_3d_fieldlines(bFunc, scale=1/0.000102):
+    """
+    bFunc: function((x, y, z)) -> (Bx, By, Bz)
+    """
+    
+    figsize=(10,8)
+    dt=0.01 * scale
+    t_max=3 * scale
+    
+    seed_points = np.array([
+        [r * np.cos(t), r * np.sin(t), -3]
+        for r in [0.05, 0.1, 0.15, 0.2]
+        for t in np.linspace(0, 2*np.pi, 8, endpoint=False)
+        ]) * scale
+    
+    def field_ode(t, pos):
+        Bx, By, Bz = bFunc(pos)
+        B_mag = np.sqrt(Bx**2 + By**2 + Bz**2) + 1e-10
+        # normalize so integration speed doesn't depend on field strength
+        return [Bx/B_mag, By/B_mag, Bz/B_mag]
+
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(projection='3d')
+
+    t_span = (0, t_max)
+    t_eval = np.linspace(0, t_max, int(t_max/dt))
+
+    for seed in seed_points:
+        # integrate forward
+        sol_fwd = solve_ivp(
+            field_ode, t_span, seed,
+            t_eval=t_eval,
+            method='RK45',
+            rtol=1e-6, atol=1e-8
+        )
+        # integrate backward (reverse field direction)
+        sol_bwd = solve_ivp(
+            lambda t, pos: [-v for v in field_ode(t, pos)],
+            t_span, seed,
+            t_eval=t_eval,
+            method='RK45',
+            rtol=1e-6, atol=1e-8
+        )
+
+        # combine backward (reversed) and forward solutions
+        x = np.concatenate([sol_bwd.y[0][::-1], sol_fwd.y[0]])
+        y = np.concatenate([sol_bwd.y[1][::-1], sol_fwd.y[1]])
+        z = np.concatenate([sol_bwd.y[2][::-1], sol_fwd.y[2]])
+
+        # color by field strength along the line
+        B_mag = np.array([
+            np.sqrt(sum(b**2 for b in bFunc(np.array([x[i], y[i], z[i]]))))
+            for i in range(len(x))
+        ])
+
+        # plot as a colored line using scatter for color gradient
+        ax.plot(x, z, y, alpha=0.7, linewidth=120)  # y-axis up
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('z')
+    ax.set_zlabel('y')
+    ax.set_title('3D Magnetic Field Lines')
+    plt.tight_layout()
+    plt.show()
+    return fig, ax
