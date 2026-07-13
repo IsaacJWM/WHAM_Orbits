@@ -62,6 +62,7 @@ def new_run_position(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,
         else:
             filename = filename + "_confined.h5"
         
+        print(vx[0], vy[0], vz[0])
         return p1, filename, vx[0]
     except MemoryError:
         snapshot = tracemalloc.take_snapshot()
