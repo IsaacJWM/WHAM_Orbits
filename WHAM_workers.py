@@ -125,7 +125,7 @@ def plot_z_vs_t(file_path, savedir=None):
             plt.ylabel("Z-position")
             plt.title(f"File {file}, Particle number {i}")
             if savedir != None:
-                plt.savefig(savedir)
+                plt.savefig(os.path.join(savedir, f"Z_vs_t_File_{file}_Vel_{i}"))
             plt.show()
             plt.close()
             
@@ -141,7 +141,7 @@ def plot_trajectory(file_path, savedir=None):
             ax.set_zlabel("z")
             plt.title(f"File {file}, Particle number {i}")
             if savedir != None:
-                plt.savefig(savedir)
+                plt.savefig(os.path.join(savedir, f"Trajectory_File_{file}_Vel_{i}.png"))
             plt.show()
             plt.close()
 
@@ -156,8 +156,7 @@ def plot_zs_vs_t(directory, confined=True, savedir=None):
     plt.ylabel("Z-position")
     plt.title("Particle positions vs time")
     if savedir != None:
-        plt.savefig(savedir)
-    plt.show()
+        plt.savefig(os.path.join(savedir, "Z_vs_time.png"))
     plt.close()
 
 def plot_trajectories(directory, confined=True, savedir=None):
@@ -174,7 +173,7 @@ def plot_trajectories(directory, confined=True, savedir=None):
     ax.set_zlabel("z")
     plt.title("Particle trajectories")
     if savedir != None:
-        plt.savefig(savedir)
+        plt.savefig(os.path.join(savedir, "Trajectories.png"))
     plt.show()
     plt.close(fig)
 
