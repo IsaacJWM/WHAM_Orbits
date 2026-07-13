@@ -9,7 +9,7 @@ y = np.sin(z)
 x = np.cos(z)
 
 path = os.getcwd()
-#os.mkdir("output")
+os.mkdir("output")
 
 with h5py.File(os.path.join(path, "output", "data.h5"), 'w') as ff:
     gp = ff.create_group("Test")
