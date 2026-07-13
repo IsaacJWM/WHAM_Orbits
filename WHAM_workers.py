@@ -73,7 +73,7 @@ def new_run_position(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,
 
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
-                    shaper=(0,0.4), shapez=(-1,1), filename='data//WHAMTest//Storage_test//'):
+                    shaper=(0,0.4), shapez=(-1,1), filename='data//Firebird_runs//'):
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
@@ -81,7 +81,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     shapez *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     bufferr = shaper[1] / 10
     bufferz = shapez[1] / 10
-    rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 5, endpoint=True), nvel)
+    rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 8, endpoint=True), nvel)
     zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 20, endpoint=True)
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
@@ -99,13 +99,15 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
         ]
     
     
-    with ProcessPoolExecutor(max_workers=16) as executor:
+    with ProcessPoolExecutor(max_workers=64) as executor:
         futures = {executor.submit(new_run_position, *args): args for args in all_args}
+        count = 0
         for future in as_completed(futures):
             try:
                 particle, filename, v = future.result()  # this re-raises the actual exception from the worker
                 ps.write_single_position_data(particle,filename,f"v{v:03.3f}",write_mode='a')
-                print("Finished", filename, v)
+                count += 1
+                print("Finished", filename, v, "Count:", count)
                 del particle
             except Exception as e:
                 print(f"Worker failed with: {type(e).__name__}: {e}")
