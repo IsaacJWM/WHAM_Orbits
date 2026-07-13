@@ -20,11 +20,11 @@ if __name__ == "__main__":
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     
-    workers.RunGrid(norbits=100, nvel=10, vertices=V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, 
+    workers.RunGrid(norbits=10000, nvel=100, vertices=V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, 
                     shaper=np.array([1e-10,0.15]), shapez=np.array([-0.7,0.7]), filename=directory)
     
     files = os.listdir(directory)
-    for file in files[:10]:
+    for file in files[:1]:
         workers.plot_z_vs_t(os.path.join(directory, file), savedir="./output")
         workers.plot_trajectory(os.path.join(directory, file), savedir="./output")
     
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
-    workers.plot_confinement_with_fieldlines(directory, field_data.field, savedir="./output")
+    workers.plot_confinement_with_fieldlines(directory, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output")
     
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)

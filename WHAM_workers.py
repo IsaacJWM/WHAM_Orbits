@@ -128,7 +128,7 @@ def plot_z_vs_t(file_path, savedir=None):
             plt.ylabel("Z-position")
             plt.title(f"File {file}, Particle number {i}")
             if savedir != None:
-                plt.savefig(os.path.join(savedir, f"Z_vs_t_File_{file}_Vel_{i}"))
+                plt.savefig(os.path.join(savedir, f"Z_vs_t_File_{file}_Vel_{i}.png"))
             plt.show()
             plt.close()
             
