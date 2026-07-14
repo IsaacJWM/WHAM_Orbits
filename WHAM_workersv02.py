@@ -36,8 +36,8 @@ def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01):
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
                     shaper=(0,0.4), shapez=(-1,1), filepath='data//WHAMTest//'):
-    nr = 6
-    nz = 10    
+    nr = 8
+    nz = 20    
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
@@ -101,13 +101,13 @@ def get_fraction_lost(conf, esc):
         print(f"Fraction confined: {frac_confined}")
 
 def confined_in_vperp_vpar_space(conf, esc, savedir=None):
-    conf_par = np.array(conf["v0"])[:,2]
-    conf_perp = np.sqrt(np.array(conf["v0"])[:,0]**2 + np.array(conf["v0"])[:,1]**2)
-    esc_par = np.array(esc["v0"])[:,2]
-    esc_perp = np.sqrt(np.array(esc["v0"])[:,0]**2 + np.array(esc["v0"])[:,1]**2)
+    conf_par = np.abs(np.stack(conf["v0"])[:,2])
+    conf_perp = np.sqrt(np.stack(conf["v0"])[:,0]**2 + np.stack(conf["v0"])[:,1]**2)
+    esc_par = np.abs(np.stack(esc["v0"])[:,2])
+    esc_perp = np.sqrt(np.stack(esc["v0"])[:,0]**2 + np.stack(esc["v0"])[:,1]**2)
                     
-    plt.plot(conf_par, conf_perp, 'o', label="Confined", color='blue')
-    plt.plot(esc_par, esc_perp, 'x', label="Escaped", color='red')
+    plt.plot(conf_perp, conf_par, 'o', label="Confined", color='blue')
+    plt.plot(esc_perp, esc_par, 'x', label="Escaped", color='red')
     plt.ylabel('Normalized Parallel Velocity')
     plt.xlabel('Normalized Perpendicular Velocity')
     plt.title('Confinement by Position in Velocity Space')
@@ -118,10 +118,10 @@ def confined_in_vperp_vpar_space(conf, esc, savedir=None):
     plt.close()
 
 def confinement_over_time(conf, esc, smooth=True, savedir=None):
-    tfinal = np.array(conf["iter"])[0]
-    tlost = np.array(esc["iter"])
+    tfinal = np.stack(conf["iter"])
+    tlost = np.stack(esc["iter"])
     
-    tlost = np.sort(np.array(tlost))
+    tlost = np.sort(tlost)
     survival = 1 - np.arange(1, len(tlost) + 1) / (len(tlost) + len(tfinal))
     
     times = np.concatenate([[0], tlost, [tfinal[0]]])
@@ -155,8 +155,8 @@ def confinement_over_time(conf, esc, smooth=True, savedir=None):
     plt.show()
         
 def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir=None):
-    conf_pos = np.array(conf["x0"])
-    esc_pos = np.array(esc["x0"])
+    conf_pos = np.stack(conf["x0"])
+    esc_pos = np.stack(esc["x0"])
     
     unique_pos = np.unique(np.concatenate([conf_pos, esc_pos]), axis=0)
     
@@ -229,8 +229,8 @@ def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir
 def plot_confined_by_pitch_angle(conf, esc, savedir=None):
     n_bins = 50
     
-    ivel_conf = np.array(conf["v0"])
-    ivel_esc = np.array(esc["v0"])
+    ivel_conf = np.stack(conf["v0"])
+    ivel_esc = np.stack(esc["v0"])
     
     pa_conf = np.arctan(np.sqrt(ivel_conf[:,0]**2 + ivel_conf[:,1]**2) / ivel_conf[:,2])
     pa_esc = np.arctan(np.sqrt(ivel_esc[:,0]**2 + ivel_esc[:,1]**2) / ivel_esc[:,2])
