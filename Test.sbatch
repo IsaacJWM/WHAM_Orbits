@@ -5,8 +5,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=64
-#SBATCH --mem=128G
-#SBATCH --time=8:00:00
+#SBATCH --mem=16G
+#SBATCH --time=2:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=isaacwrightmuller@gmail.com
 

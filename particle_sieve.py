@@ -36,14 +36,12 @@ def set_up_grid(nx=8, ny=8, nz=8, xmin=-95, xmax=95, zmin=10, zmax=500, show_plo
 
     return xx[keep_indices].astype(int),yy[keep_indices].astype(int),zz[keep_indices].astype(int)
 
-def select_velocities(nvel=100, seed=None):
     ##Choose a sample of velocities from a normal distribution
     ## Optionally, specify the seed to get repeatable test cases
-
-    if seed is not None:
-        np.random.seed(seed)
-
-    return np.random.randn(nvel)
+def select_velocities(nvel=100, rng=None):
+    if rng is None:
+        rng = np.random.default_rng()  # unseeded, uses OS entropy
+    return rng.standard_normal(nvel)
 
 
 def run_position(position,norbits=100,nvel=100,dt=0.01,test=False,
