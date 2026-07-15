@@ -110,7 +110,7 @@ def confined_in_vperp_vpar_space(conf, esc, savedir=None):
     if len(conf) != 0:
         conf_par = np.abs(np.stack(conf["v0"])[:,2])
         conf_perp = np.sqrt(np.stack(conf["v0"])[:,0]**2 + np.stack(conf["v0"])[:,1]**2)
-        plt.plot(conf_perp, conf_par, 'o', label="Confined", color='blue')
+        plt.plot(conf_perp, conf_par, '.', label="Confined", color='blue')
     if len(esc) != 0:
         esc_par = np.abs(np.stack(esc["v0"])[:,2])
         esc_perp = np.sqrt(np.stack(esc["v0"])[:,0]**2 + np.stack(esc["v0"])[:,1]**2)
@@ -205,7 +205,7 @@ def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir
     sc = ax.scatter(
         df['z'], df['r'],
         c=df['conf'],
-        cmap='plasma_r',
+        cmap='plasma',
         vmin=0, vmax=1,
         s=50,           # marker size, adjust to taste
         zorder=2        # draw points on top of field lines
