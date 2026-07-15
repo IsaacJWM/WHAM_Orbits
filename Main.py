@@ -19,10 +19,10 @@ if __name__ == "__main__":
     
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
-    print("Values initialized")
-    workers.RunGrid(norbits=10000, nvel=10, vertices=V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, 
-                    shaper=np.array([1e-10,0.15]), shapez=np.array([-0.65,0.65]), filepath=directory)
-    print("Function closed")
+    #print("Values initialized")
+    #workers.RunGrid(norbits=10000, nvel=10, vertices=V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, 
+    #                shaper=np.array([1e-10,0.15]), shapez=np.array([-0.65,0.65]), filepath=directory)
+    #print("Function closed")
     
     
     conf, esc = workers.read_data(os.path.join(directory, "output.pkl"))

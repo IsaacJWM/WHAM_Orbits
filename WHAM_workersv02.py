@@ -105,13 +105,14 @@ def get_fraction_lost(conf, esc):
         print(f"Fraction confined: {frac_confined}")
 
 def confined_in_vperp_vpar_space(conf, esc, savedir=None):
-    conf_par = np.abs(np.stack(conf["v0"])[:,2])
-    conf_perp = np.sqrt(np.stack(conf["v0"])[:,0]**2 + np.stack(conf["v0"])[:,1]**2)
-    esc_par = np.abs(np.stack(esc["v0"])[:,2])
-    esc_perp = np.sqrt(np.stack(esc["v0"])[:,0]**2 + np.stack(esc["v0"])[:,1]**2)
-                    
-    plt.plot(conf_perp, conf_par, 'o', label="Confined", color='blue')
-    plt.plot(esc_perp, esc_par, 'x', label="Escaped", color='red')
+    if len(conf) != 0:
+        conf_par = np.abs(np.stack(conf["v0"])[:,2])
+        conf_perp = np.sqrt(np.stack(conf["v0"])[:,0]**2 + np.stack(conf["v0"])[:,1]**2)
+        plt.plot(conf_perp, conf_par, 'o', label="Confined", color='blue')
+    if len(esc) != 0:
+        esc_par = np.abs(np.stack(esc["v0"])[:,2])
+        esc_perp = np.sqrt(np.stack(esc["v0"])[:,0]**2 + np.stack(esc["v0"])[:,1]**2)
+        plt.plot(esc_perp, esc_par, 'x', label="Escaped", color='red')
     plt.ylabel('Normalized Parallel Velocity')
     plt.xlabel('Normalized Perpendicular Velocity')
     plt.title('Confinement by Position in Velocity Space')
@@ -122,6 +123,10 @@ def confined_in_vperp_vpar_space(conf, esc, savedir=None):
     plt.close()
 
 def confinement_over_time(conf, esc, smooth=True, savedir=None):
+    if len(esc) == 0:
+        print("Error, no particles escaped")
+        return
+    
     tfinal = np.stack(conf["iter"])
     tlost = np.stack(esc["iter"])
     
@@ -159,8 +164,14 @@ def confinement_over_time(conf, esc, smooth=True, savedir=None):
     plt.show()
         
 def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir=None):
-    conf_pos = np.stack(conf["x0"])
-    esc_pos = np.stack(esc["x0"])
+    if len(conf) != 0:
+        conf_pos = np.stack(conf["x0"])
+    else:
+        conf_pos = np.array([])
+    if len(esc) != 0:
+        esc_pos = np.stack(esc["x0"])
+    else:
+        esc_pos = np.array([])
     
     unique_pos = np.unique(np.concatenate([conf_pos, esc_pos]), axis=0)
     
@@ -232,22 +243,20 @@ def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir
 
 def plot_confined_by_pitch_angle(conf, esc, savedir=None):
     n_bins = 50
-    
-    ivel_conf = np.stack(conf["v0"])
-    ivel_esc = np.stack(esc["v0"])
-    
-    pa_conf = np.arctan(np.sqrt(ivel_conf[:,0]**2 + ivel_conf[:,1]**2) / ivel_conf[:,2])
-    pa_esc = np.arctan(np.sqrt(ivel_esc[:,0]**2 + ivel_esc[:,1]**2) / ivel_esc[:,2])
-    
     bins = np.linspace(-np.pi/2, np.pi/2, n_bins + 1)
-
     fig, ax = plt.subplots(figsize=(8, 5))
-
-    ax.hist(pa_conf, bins=bins, alpha=0.6, color='steelblue', 
-            label=f'Confined (n={len(pa_conf)})', edgecolor='white', linewidth=0.5)
-    ax.hist(pa_esc, bins=bins, alpha=0.6, color='coral',
+    
+    if len(conf) != 0:
+        ivel_conf = np.stack(conf["v0"])
+        pa_conf = np.arctan(np.sqrt(ivel_conf[:,0]**2 + ivel_conf[:,1]**2) / ivel_conf[:,2])
+        ax.hist(pa_conf, bins=bins, alpha=0.6, color='steelblue', 
+                label=f'Confined (n={len(pa_conf)})', edgecolor='white', linewidth=0.5)
+    if len(esc) != 0:
+        ivel_esc = np.stack(esc["v0"])
+        pa_esc = np.arctan(np.sqrt(ivel_esc[:,0]**2 + ivel_esc[:,1]**2) / ivel_esc[:,2])
+        ax.hist(pa_esc, bins=bins, alpha=0.6, color='coral',
             label=f'Escaped (n={len(pa_esc)})', edgecolor='white', linewidth=0.5)
-
+    
     ax.set_xlabel('Pitch Angle (radians)', fontsize=13)
     ax.set_ylabel('Count', fontsize=13)
     ax.set_title('Pitch Angle Distribution: Confined vs Escaped', fontsize=14)
