@@ -30,12 +30,14 @@ def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01):
     p1 = pt.particle(position, np.array([vx[0],vy[0],vz[0]]), dt, int(norbits * 2 * np.pi / dt), silent=True)
     p1.set_boundaries(vertices=vertices)
     p1.step(bFunc)
+    print("Particle done")
     
     return p1
 
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
                     shaper=(0,0.4), shapez=(-1,1), filepath='data//WHAMTest//'):
+    print("Function starting")
     nr = 8
     nz = 20    
     
@@ -63,6 +65,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     
     data = pd.DataFrame(index=range(nr * nz * nvel), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
+    print("Parallelization starting")
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
         count = 0
@@ -77,6 +80,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
             count += 1
             print("Finished count:", count)
     
+    print("All finished")
     data.to_pickle(os.path.join(filepath, "output.pkl"))
 
 def read_data(fname):
