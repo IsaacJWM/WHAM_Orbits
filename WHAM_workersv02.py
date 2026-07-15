@@ -83,7 +83,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
             count += 1
             print("Finished count:", count)
     
-    data.to_pickle(os.path.join(filepath, "output2.pkl"))
+    data.to_pickle(os.path.join(filepath, "output.pkl"))
 
 def read_data(fname):
     df = pd.read_pickle(fname)
