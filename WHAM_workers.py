@@ -21,7 +21,7 @@ sys.path.insert(0, "./classes")
 import particlev02 as pt
 
 
-def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,filename=None):
+def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,filename="_"):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
@@ -36,8 +36,7 @@ def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=T
     else:
         dump_size = None
         
-    p1 = pt.particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], bFunc, int(norbits * 2 * np.pi / dt), 
-            dump_size=dump_size, write_data=False, silent=True)
+    p1 = pt.particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], dt, int(norbits * 2 * np.pi / dt), silent=True)
                         # creating the particle with the given conditions
     p1.set_boundaries(vertices=vertices)
     p1.step(bFunc)
