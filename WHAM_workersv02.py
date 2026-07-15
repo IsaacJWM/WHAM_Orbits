@@ -120,7 +120,7 @@ def confined_in_vperp_vpar_space(conf, esc, savedir=None):
     plt.title('Confinement by Position in Velocity Space')
     plt.legend()
     if savedir != None:
-        plt.savefig(savedir)
+        plt.savefig(os.path.join(savedir, "Vperp_Vpar.png"))
     plt.show()
     plt.close()
 
@@ -162,7 +162,7 @@ def confinement_over_time(conf, esc, smooth=True, savedir=None):
     ax.legend(fontsize=11)
     plt.tight_layout()
     if savedir != None:
-        plt.savefig(savedir)
+        plt.savefig(os.path.join(savedir, "Confinement_over_time.png"))
     plt.show()
         
 def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir=None):
@@ -239,6 +239,8 @@ def plot_confinement_with_fieldlines(conf, esc, bFunc, scale=1/0.000102, savedir
     ax.spines['right'].set_visible(False)
 
     plt.tight_layout()
+    if savedir != None:
+        plt.savefig(os.path.join(savedir, "Confinement_by_position.png"))
     plt.show()
     return fig, ax
 
@@ -268,6 +270,8 @@ def plot_confined_by_pitch_angle(conf, esc, savedir=None):
     ax.tick_params(labelsize=11)
 
     plt.tight_layout()
+    if savedir != None:
+        plt.savefig(os.path.join(savedir, "Pitch_angle.png"))
     plt.show()
     plt.close(fig)
 
