@@ -1,9 +1,7 @@
-import WHAM_workersv02 as workers2
-import WHAM_workers as workers
+import WHAM_workersv02 as workers
 import numpy as np
 import WHAMField
 import os
-import matplotlib.pyplot as plt
 
 
 if __name__ == "__main__":
@@ -22,7 +20,7 @@ if __name__ == "__main__":
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     print("Function starting")
-    workers2.RunGrid(norbits=10000, nvel=100, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
+    workers.RunGrid(norbits=10000, nvel=100, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
                     shaper=np.array([1e-10,0.15]), shapez=np.array([-0.65,0.65]), filepath=directory)
     print("Function closed")
     
@@ -41,7 +39,7 @@ if __name__ == "__main__":
     plt.show()
     
     """
-    conf, esc = workers.read_data(os.path.join(directory, "output.pkl"))
+    conf, esc = workers.read_data(os.path.join(directory, "output2.pkl"))
     
     workers.get_fraction_lost(conf, esc)
     workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output")
