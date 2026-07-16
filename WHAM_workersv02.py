@@ -69,19 +69,20 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     
     data = pd.DataFrame(index=range(nr * nz * nvel), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
+    zs = np.array([0,0,0])
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
         count = 0
         for future in as_completed(futures):
             try:
                 p = future.result()  # this re-raises the actual exception from the worker
-                data.loc[count] = [p.r0, p.v0, p.r, p.v, p.iter, p.outOfBounds == False, True]
+                data.loc[count] = [p.r0, p.v0, p.r, p.v, p.iter, p.outOfBounds == False, p.success]
+                count += 1
+                print(f"Finished count: {count}. Iterations: {p.iter}. Time per iteration: {p.iter_time}")
             except Exception as e:
-                print(f"Worker failed with: {type(e).__name__}: {e}")
-                zs = np.array([0,0,0])
+                print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 data.loc[count] = [zs, zs, zs, zs, 0, False, False]
-            count += 1
-            print("Finished count:", count)
+                count += 1
     
     data.to_pickle(os.path.join(filepath, "output.pkl"))
 
@@ -279,6 +280,143 @@ def plot_confined_by_pitch_angle(conf, esc, savedir=None):
     plt.show()
     plt.close(fig)
 
+def plot_escaped_positions_2d(esc, boundary, bFunc, scale, savedir=None):
+    """
+    escape_positions: array of shape (N, 3) with x,y,z positions where particles escaped
+    boundary: array of boundary positions in r-z coordinates
+    """
+    esc_xf = np.stack(esc['xf'])
+    r = np.sqrt(esc_xf[:,0]**2 + esc_xf[:,1]**2)
+    z = esc_xf[:,2]
+    esc_x0 = np.stack(esc['x0'])
+    r0 = esc_x0[:,1]
+    z0 = esc_x0[:,2]
+    
+    rr = np.linspace(0, 0.25 * scale, 100)
+    zz = np.linspace(-1.25 * scale, 1.25 * scale, 1000)
+    Z, R = np.meshgrid(zz, rr)
+    BR = np.zeros_like(R)
+    BZ = np.zeros_like(Z)
+    
+    for i in range(len(rr)-1):
+        for j in range(len(zz)-1):
+            B = bFunc([rr[i], 0, zz[j]])
+            BR[i, j] = B[0]
+            BZ[i, j] = B[2]
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    ax.plot(boundary[:,1], boundary[:,0], color='gray', linewidth=5, zorder=1, label='Confinement boundary')
+    ax.scatter(z, r, marker='x', color='red', zorder=2, label=f'Escape positions (n={len(esc)})')
+    ax.scatter(z0, r0, marker='o', color='green', label='Starting positions')
+    
+    # --- Magnetic field lines ---
+    B_magnitude = np.sqrt(BR**2 + BZ**2)
+    BR_norm = BR / (B_magnitude + 1e-10)
+    BZ_norm = BZ / (B_magnitude + 1e-10)
+    
+    ax.streamplot(
+        zz, rr,
+        BZ_norm, BR_norm,
+        color='steelblue',
+        linewidth=1.0,
+        density=1,
+        arrowsize=1.0,
+        zorder=1,        # draw field lines underneath the points
+    )
+    
+    # ----------------------------------------------------------------
+    # 4. Formatting
+    # ----------------------------------------------------------------
+    ax.set_xlabel('z (ion gyroradii)', fontsize=13)
+    ax.set_ylabel('r (ion gyroradii)', fontsize=13)
+    ax.set_title('Particle Confinement by Position with Magnetic Field Lines', fontsize=14)
+    ax.set_xlim(zz.min(), zz.max())
+    ax.set_ylim(rr.min(), rr.max())
+    ax.tick_params(labelsize=11)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    
+    
+    plt.xlabel("z (ion gyroradii)")
+    plt.ylabel("r (ion gyroradii)")
+    plt.legend()
+    plt.title("Particle Escape Positions")
+    if savedir != None:
+        plt.savefig(os.path.join(savedir, "Escape_positions_2d.png"))
+        return
+    plt.show()
+
+
+def plot_escaped_positions_3d(esc, boundary, savedir=None):
+    """
+    escape_positions: array of shape (N, 3) with x,y,z positions where particles escaped
+    boundary: array of boundary positions in r-z coordinates
+    """
+
+    # ----------------------------------------------------------------
+    # 1. Revolve the 2D boundary curve around the z-axis
+    # ----------------------------------------------------------------
+    boundary_r = boundary[:,0]
+    boundary_z = boundary[:,1]
+    theta = np.linspace(0, 2 * np.pi, 100)
+
+    # Meshgrid over boundary points and azimuthal angles
+    R, Theta = np.meshgrid(boundary_r, theta)
+    Z, _ = np.meshgrid(boundary_z, theta)
+
+    # Convert to Cartesian
+    X_surf = R * np.cos(Theta)
+    Y_surf = R * np.sin(Theta)
+    Z_surf = Z
+
+    # ----------------------------------------------------------------
+    # 2. Build the plot
+    # ----------------------------------------------------------------
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(projection='3d')
+
+    # --- Boundary surface ---
+    ax.plot_surface(
+        X_surf, Z_surf, Y_surf,   # z-axis up convention: pass y as third arg
+        alpha=0.15,                # very transparent so escape points are visible
+        color='steelblue',
+        edgecolor='none',
+        zorder=1
+    )
+    
+    # --- Escape positions ---
+    x_esc = np.stack(esc['xf'])[:, 0]
+    y_esc = np.stack(esc['xf'])[:, 1]
+    z_esc = np.stack(esc['xf'])[:, 2]
+
+    ax.scatter(
+        x_esc, z_esc, y_esc,      # y-axis up convention
+        c='coral',
+        s=20,
+        alpha=0.8,
+        zorder=3,
+        label=f'Escape positions (n={len(esc)})'
+    )
+    
+    # ----------------------------------------------------------------
+    # 3. Formatting
+    # ----------------------------------------------------------------
+    ax.set_xlabel('x', fontsize=12)
+    ax.set_ylabel('z', fontsize=12)
+    ax.set_zlabel('y', fontsize=12)
+    ax.set_title('Particle Escape Positions', fontsize=14)
+    ax.legend(fontsize=11)
+
+    plt.tight_layout()
+    if savedir != None:
+        plt.savefig(os.path.join(savedir, "Escape_Positions_3d.png"))
+        return
+    plt.show()
+    plt.close(fig)
+    return fig, ax
 
 
 def plot_3d_fieldlines(bFunc, scale=1/0.000102):

@@ -25,6 +25,11 @@ class particle(object):
         self.iter = 0
         self.outOfBounds = False
         self.silent = silent
+        self.success = False
+        if self.v0[2] > 0:
+            self.positive_v0 = True
+        elif self.v0[2] < 0:
+            self.positive_v0 = False
 
     def get_r(self):
         return self.r
@@ -67,8 +72,18 @@ class particle(object):
             self.v = self.v + np.cross(v_prime, 2 * t_help / (1 + np.linalg.norm(t_help) ** 2))
             self.r = self.r + self.dt * self.v
             
+            if self.positive_v0 and self.v[2] < 0:
+                self.iter = self.noOfSteps
+                self.success = True
+                break
+            
+            elif not self.positive_v0 and self.v[2] > 0:
+                self.iter = self.noOfSteps
+                self.success = True
+                break
+            
             self.iter += 1
                 
-            self.iter_time = (time.time() - start) / self.iter
+        self.iter_time = (time.time() - start) / self.iter
             
         return self

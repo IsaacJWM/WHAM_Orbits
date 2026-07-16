@@ -27,10 +27,14 @@ def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=T
     """
     xloc,yloc,zloc = position
     
-    vx = ps.select_velocities(1)
-    vy = ps.select_velocities(1)
-    vz = ps.select_velocities(1)
-
+    #vx = ps.select_velocities(1)
+    #vy = ps.select_velocities(1)
+    #vz = ps.select_velocities(1)
+    
+    vx = [0.01]
+    vy = [0.01]
+    vz = [0.5]
+    
     if no_chunks:
         dump_size = norbits/dt
     else:
