@@ -18,7 +18,7 @@ sys.path.insert(0, "./classes")
 import Particlev03 as pt
 
 
-def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,seed=0):
+def run_particle_in_grid(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,seed=0):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
@@ -27,8 +27,9 @@ def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,seed=0):
     vx = ps.select_velocities(1, rng)
     vy = ps.select_velocities(1, rng)
     vz = ps.select_velocities(1, rng)
-    print(vx, vy, vz)
-    p1 = pt.particle(position, np.array([vx[0], vy[0], vz[0]]), dt, int(norbits * 2 * np.pi / dt), silent=True)
+    v = v0 + np.array([vx[0], vy[0], vz[0]])
+    
+    p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), silent=True)
     p1.set_boundaries(vertices=vertices)
     p1.step(bFunc)
     
@@ -38,8 +39,8 @@ def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,seed=0):
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
                     shaper=(0,0.4), shapez=(-1,1), filepath='data//WHAMTest//'):
     
-    nr = 8
-    nz = 20    
+    nr = 10
+    nz = 10    
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
@@ -60,7 +61,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     #        print("Concluded particle", r, z)
     
     args_unseeded = [
-        (np.array([0, rloc, zloc]), field_data.field, vertices, norbits, dt)
+        (np.array([0, rloc, zloc]), field_data.field, vertices, np.array([0,0,0]), norbits, dt)
         for zloc in zz
         for rloc in rr
         ]
@@ -85,6 +86,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
                 count += 1
     
     data.to_pickle(os.path.join(filepath, "output.pkl"))
+    
 
 def read_data(fname):
     df = pd.read_pickle(fname)

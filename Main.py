@@ -1,6 +1,6 @@
 import WHAM_workersv02 as workers
-import WHAM_workers as old_workers
-import particle_sieve as ps
+#import WHAM_workers as old_workers
+#import particle_sieve as ps
 import numpy as np
 import WHAMField
 import os
@@ -8,6 +8,8 @@ import os
 
 if __name__ == "__main__":
     #Testing git push from new computer again
+    
+    
     
     directory = "./data/Firebird_runs/"
     
@@ -29,10 +31,10 @@ if __name__ == "__main__":
     #old_workers.plot_z_vs_t(fname, savedir="./output/")
     #old_workers.plot_trajectory(fname, savedir="./output/")
     
-    #print("Function starting")
-    #workers.RunGrid(norbits=100000, nvel=1000, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
-    #                shaper=np.array([1e-10,0.15]), shapez=np.array([-0.5,0.5]), filepath=directory)
-    #print("Function closed")
+    print("Function starting")
+    workers.RunGrid(norbits=100000, nvel=10000, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
+                    shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), filepath=directory)
+    print("Function closed")
     
     V = V * (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     """
@@ -49,6 +51,7 @@ if __name__ == "__main__":
     plt.show()
     """
     
+
     conf, esc = workers.read_data(os.path.join(directory, "output.pkl"))
     
     workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
@@ -61,7 +64,7 @@ if __name__ == "__main__":
     
     #workers.plot_3d_fieldlines(field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0))
 
-    
+
 
 
 
