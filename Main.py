@@ -50,6 +50,9 @@ if __name__ == "__main__":
     
     conf, esc = workers.read_data(os.path.join(directory, "output.pkl"))
     
+    print(len(conf))
+    print(len(esc))
+    
     workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
     workers.get_fraction_lost(conf, esc)

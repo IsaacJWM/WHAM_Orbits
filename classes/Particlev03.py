@@ -64,6 +64,7 @@ class particle(object):
             
             if self.outOfBounds is True or not self.bound.contains(Point(np.sqrt(last_position[0] ** 2 + last_position[1] ** 2), last_position[2])):
                 self.outOfBounds = True
+                self.success = True
                 break
             
             t_help = q * self.dt * B(self.r, self.iter * self.dt) / (2 * m)
