@@ -29,10 +29,10 @@ if __name__ == "__main__":
     #old_workers.plot_z_vs_t(fname, savedir="./output/")
     #old_workers.plot_trajectory(fname, savedir="./output/")
     
-    print("Function starting")
-    workers.RunGrid(norbits=100000, nvel=1000, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
-                    shaper=np.array([1e-10,0.15]), shapez=np.array([-0.5,0.5]), filepath=directory)
-    print("Function closed")
+    #print("Function starting")
+    #workers.RunGrid(norbits=100000, nvel=1000, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
+    #                shaper=np.array([1e-10,0.15]), shapez=np.array([-0.5,0.5]), filepath=directory)
+    #print("Function closed")
     
     V = V * (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     """
@@ -50,9 +50,6 @@ if __name__ == "__main__":
     """
     
     conf, esc = workers.read_data(os.path.join(directory, "output.pkl"))
-    
-    print(len(conf))
-    print(len(esc))
     
     workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
