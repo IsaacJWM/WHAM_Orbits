@@ -86,7 +86,41 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
                 count += 1
     
     data.to_pickle(os.path.join(filepath, "output.pkl"))
+
+def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=(0,0,1),
+           shapex=(0,1), shapey=(0,1), shapez=(0,1), filepath='data//WHAMTest//'):
     
+    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
+    
+    x = np.random.uniform(*shapex, nparticles)
+    y = np.random.uniform(*shapey, nparticles)
+    z = np.random.uniform(*shapez, nparticles)
+    
+    positions = np.array([x, y, z]).T
+    
+    seeds = np.random.SeedSequence.spawn(nparticles)
+    
+    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    
+    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, s) 
+            for pos, s in zip(positions, seeds)]
+    
+    data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
+    max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
+    zs = np.array([0,0,0])
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
+        count = 0
+        for future in as_completed(futures):
+            try:
+                p = future.result()  # this re-raises the actual exception from the worker
+                data.loc[count] = [p.r0, p.v0, p.r, p.v, p.iter, p.outOfBounds == False, p.success]
+                count += 1
+                print(f"Finished count: {count}. Iterations: {p.iter}. Time per iteration: {p.iter_time}")
+            except Exception as e:
+                print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
+                data.loc[count] = [zs, zs, zs, zs, 0, False, False]
+                count += 1
 
 def read_data(fname):
     df = pd.read_pickle(fname)
