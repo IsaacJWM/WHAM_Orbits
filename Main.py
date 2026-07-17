@@ -7,6 +7,7 @@ import os
 
 
 if __name__ == "__main__":
+    #Testing git push from new computer
     
     directory = "./data/Firebird_runs/"
     
