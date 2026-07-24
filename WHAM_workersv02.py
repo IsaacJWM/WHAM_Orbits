@@ -85,7 +85,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
                 data.loc[count] = [zs, zs, zs, zs, 0, False, False]
                 count += 1
     
-    data.to_pickle(os.path.join(filepath, "output.pkl"))
+    data.to_pickle(os.path.join(filepath, "thermal_output.pkl"))
 
 def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=(0,0,1),
            shapex=(0,1), shapey=(0,1), shapez=(0,1), filepath='data//WHAMTest//'):
@@ -121,6 +121,8 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 data.loc[count] = [zs, zs, zs, zs, 0, False, False]
                 count += 1
+    
+    data.to_pickle(os.path.join(filepath, "NBI_output.pkl"))
 
 def read_data(fname):
     df = pd.read_pickle(fname)
