@@ -31,7 +31,7 @@ if __name__ == "__main__":
     #old_workers.plot_z_vs_t(fname, savedir="./output/")
     #old_workers.plot_trajectory(fname, savedir="./output/")
     
-    workers.RunNBI(100000, 1000, V, dt=1, m=m, q=1, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
+    workers.RunNBI(100000, 100000, V, dt=1, m=m, q=1, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
         mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
     
     

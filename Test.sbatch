@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=Orbits_run
+#SBATCH --job-name=NBI_run
 #SBATCH --output=output.txt
 #SBATCH --error=error.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=8G
-#SBATCH --time=4:00:00
+#SBATCH --cpus-per-task=128
+#SBATCH --mem=32G
+#SBATCH --time=8:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=isaacwrightmuller@gmail.com
 
