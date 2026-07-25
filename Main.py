@@ -25,37 +25,16 @@ if __name__ == "__main__":
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     
-    nparticles = 100
-    rmax = 0.05
-    mfp = 0.1
-    ipos = np.array([-0.2, 0, -0.2])
-    vdir = np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)])
-    theta = np.random.uniform(0, 2*np.pi, nparticles)
-    r = np.sqrt(np.random.uniform(0, rmax ** 2, nparticles))
-    zmod = np.random.exponential(mfp, size=nparticles)
-    xmod = r * np.cos(theta)
-    ymod = r * np.sin(theta)
-    
-    print("Mean distance:", np.mean(zmod))
-    
-    arbitrary = np.array([0,1,0])
-    e1 = np.cross(vdir, arbitrary)
-    e1 /= np.linalg.norm(e1)
-    e2 = np.cross(vdir, e1)
-    
-    positions = ipos + np.outer(zmod, vdir) + np.outer(xmod, e1) + np.outer(ymod, e2)
-    
-    
     #particle, fname, v = old_workers.run_particle_in_grid([100, 100, 0], field_data.field, V, 10000, 1, filename="./data/WHAMTest/Troubleshooting")
     #ps.write_single_position_data(particle,fname,f"v{v:03.3f}",write_mode='a')
     
     #old_workers.plot_z_vs_t(fname, savedir="./output/")
     #old_workers.plot_trajectory(fname, savedir="./output/")
-    """
+    
     workers.RunNBI(100000, 1000, V, dt=1, m=m, q=1, T=T, B0=B0, scale=scale, v=10, vdir=(1/np.sqrt(2), 0, 1/np.sqrt(2)),
         mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
     
-    """
+    
     """
     Thermal run function call
     
@@ -64,7 +43,7 @@ if __name__ == "__main__":
                     shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), filepath=directory)
     print("Function closed")
     """
-    """
+    
     
     V = V * (scale/0.000102) *np.sqrt(m*T) / (q*B0)
 
@@ -79,10 +58,6 @@ if __name__ == "__main__":
     #workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
     
     #workers.plot_3d_fieldlines(field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0))
-
-
-
-"""
 
 
 
