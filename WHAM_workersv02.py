@@ -109,7 +109,8 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     
     positions = ipos + np.outer(zmod, vdir) + np.outer(xmod, e1) + np.outer(ymod, e2)
     
-    seeds = np.random.SeedSequence.spawn(nparticles)
+    ss = np.random.SeedSequence()
+    seeds = ss.spawn(nparticles)
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
