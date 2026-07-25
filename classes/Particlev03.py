@@ -66,6 +66,7 @@ class particle(object):
             last_position = self.r
             
             if self.outOfBounds is True:
+                self.iter = self.noOfSteps
                 break
             
             if not self.bound.contains(Point(np.sqrt(last_position[0] ** 2 + last_position[1] ** 2), last_position[2])):

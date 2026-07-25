@@ -18,20 +18,26 @@ sys.path.insert(0, "./classes")
 import Particlev03 as pt
 
 
-def run_particle_in_grid(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,seed=0):
+def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,seed=0):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
+    print("Particle started")
     rng = np.random.default_rng(seed)
     
     vx = ps.select_velocities(1, rng)
     vy = ps.select_velocities(1, rng)
     vz = ps.select_velocities(1, rng)
+    print("Velocities randomized")
     v = v0 + np.array([vx[0], vy[0], vz[0]])
+    print("Velocities finished")
     
     p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), silent=True)
+    print("Particle initialized")
     p1.set_boundaries(vertices=vertices)
+    print("Boundaries set")
     p1.step(bFunc)
+    print("Particle finished")
     
     return p1
 
@@ -72,7 +78,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     zs = np.array([0,0,0])
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
+        futures = {executor.submit(run_particle, *args): args for args in all_args}
         count = 0
         for future in as_completed(futures):
             try:
@@ -87,7 +93,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     
     data.to_pickle(os.path.join(filepath, "thermal_output.pkl"))
 
-def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=(0,0,1),
+def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=np.array([0,0,1]),
            mfp=0.1, ipos=np.array([1,0,0]), rmax=0.05, filepath='data//WHAMTest//'):
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
@@ -121,7 +127,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     zs = np.array([0,0,0])
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
+        futures = {executor.submit(run_particle, *args): args for args in all_args}
         count = 0
         for future in as_completed(futures):
             try:
