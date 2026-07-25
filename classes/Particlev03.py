@@ -44,6 +44,9 @@ class particle(object):
         Used to set the boundary of our container
         '''
         self.bound = Polygon(vertices)
+        
+        if not self.bound.contains(Point(np.sqrt(self.r0[0] ** 2 + self.r0[1] ** 2), self.r0[2])):
+            self.outOfBounds = True
 
     def step(self, B, E=Fields.nullField):
         '''
@@ -62,7 +65,10 @@ class particle(object):
             # check if particle is still within cube
             last_position = self.r
             
-            if self.outOfBounds is True or not self.bound.contains(Point(np.sqrt(last_position[0] ** 2 + last_position[1] ** 2), last_position[2])):
+            if self.outOfBounds is True:
+                break
+            
+            if not self.bound.contains(Point(np.sqrt(last_position[0] ** 2 + last_position[1] ** 2), last_position[2])):
                 self.outOfBounds = True
                 self.success = True
                 break

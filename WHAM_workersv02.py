@@ -88,15 +88,26 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     data.to_pickle(os.path.join(filepath, "thermal_output.pkl"))
 
 def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=(0,0,1),
-           shapex=(0,1), shapey=(0,1), shapez=(0,1), filepath='data//WHAMTest//'):
+           mfp=0.1, ipos=np.array([1,0,0]), rmax=0.05, filepath='data//WHAMTest//'):
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
-    x = np.random.uniform(*shapex, nparticles)
-    y = np.random.uniform(*shapey, nparticles)
-    z = np.random.uniform(*shapez, nparticles)
+    mfp *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    ipos *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    rmax *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    positions = np.array([x, y, z]).T
+    theta = np.random.uniform(0, 2*np.pi, nparticles)
+    r = np.sqrt(np.random.uniform(0, rmax ** 2, nparticles))
+    zmod = np.random.exponential(mfp, size=nparticles)
+    xmod = r * np.cos(theta)
+    ymod = r * np.sin(theta)
+    
+    arbitrary = np.array([0,1,0])
+    e1 = np.cross(vdir, arbitrary)
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(vdir, e1)
+    
+    positions = ipos + np.outer(zmod, vdir) + np.outer(xmod, e1) + np.outer(ymod, e2)
     
     seeds = np.random.SeedSequence.spawn(nparticles)
     
