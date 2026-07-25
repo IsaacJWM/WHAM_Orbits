@@ -22,22 +22,17 @@ def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.0
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
-    print("Particle started")
+    
     rng = np.random.default_rng(seed)
     
     vx = ps.select_velocities(1, rng)
     vy = ps.select_velocities(1, rng)
     vz = ps.select_velocities(1, rng)
-    print("Velocities randomized")
     v = v0 + np.array([vx[0], vy[0], vz[0]])
-    print("Velocities finished")
     
     p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), silent=True)
-    print("Particle initialized")
     p1.set_boundaries(vertices=vertices)
-    print("Boundaries set")
     p1.step(bFunc)
-    print("Particle finished")
     
     return p1
 
