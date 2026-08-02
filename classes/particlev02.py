@@ -30,6 +30,11 @@ class particle(object):
         self.outOfBounds = False
         self.Bfield = np.zeros((nOfSteps, 3))
         self.silent = silent
+        self.success = False
+        if self.v0[2] > 0:
+            self.positive_v0 = True
+        elif self.v0[2] < 0:
+            self.positive_v0 = False
 
     def get_r(self):
         return self.r
@@ -47,6 +52,23 @@ class particle(object):
         Used to set the boundary of our container
         '''
         self.bound = Polygon(vertices)
+        
+        if not self.bound.contains(Point(np.sqrt(self.r0[0] ** 2 + self.r0[1] ** 2), self.r0[2])):
+            self.outOfBounds = True
+
+    def pad_data(self):
+        a = []
+        b = []
+        c = []
+
+        for j in range(0, (self.noOfSteps - self.iter)):
+            a.append([0, 0, 0])
+            b.append(last_position)
+            c.append(B(last_position,(self.iter+j)*self.dt))
+
+        self.v = np.concatenate([self.v, a],axis=0)
+        self.r = np.concatenate([self.r, b],axis=0)
+        self.Bfield = np.concatenate([self.Bfield, c],axis=0)
 
     def step(self, B, E=Fields.nullField):
         '''
@@ -64,11 +86,17 @@ class particle(object):
         self.Bfield[0] = B(self.r0, self.iter * self.dt)
         
         #include initial position in number of steps so that total length = num_iterations
-        for ii in range(0, self.noOfSteps-1):
-            # check if particle is still within cube
-            last_position = self.r[ii]
+        for i in range(0, self.noOfSteps-1):
             
-            if ii == 100 and not self.silent:
+            if self.outOfBounds is True:
+                self.pad_data()
+                self.iter = self.noOfSteps
+                break
+            
+            # check if particle is still within cube
+            last_position = self.r[i]
+            
+            if i == 100 and not self.silent:
                 print("Estimated total iteration time for this particle: {:4.1f} s".format(self.noOfSteps*(time.time() - start) / self.iter))
 
             x = last_position[0]
@@ -76,50 +104,22 @@ class particle(object):
             z = last_position[2]
             current_radius = np.sqrt(x ** 2 + y ** 2)
 
-            if self.outOfBounds is True or not self.bound.contains(Point(current_radius, z)):
+            if not self.bound.contains(Point(current_radius, z)):
                 # set flag to true
                 self.outOfBounds = True
-                self.write_data = False
 
-                # pad the rest of the array with the previous position
-                '''
-                self.v.extend((iter_count - self.iter) * [0, 0, 0])
-                self.r.extend((iter_count - self.iter) * last_position)
-                '''
-                a = []
-                b = []
-                c = []
-
-                for j in range(0, (self.noOfSteps - self.iter)):
-                    a.append([0, 0, 0])
-                    b.append(last_position)
-                    c.append(B(last_position,(self.iter+j)*self.dt))
-
-                self.v = np.concatenate([self.v, a],axis=0)
-                self.r = np.concatenate([self.r, b],axis=0)
-                self.Bfield = np.concatenate([self.Bfield, c],axis=0)
+                self.pad_data()
 
                 # quit the loop
                 break
-
-            #half_electrical_impulse = q * self.dt * E(self.r[ii], self.iter * self.dt) / (2 * m)
-            #v_minus = self.v[ii] + half_electrical_impulse
-            
-            #t_help = q * self.dt * B(self.r[ii], self.iter * self.dt) / (2 * m)
-            #v_prime = v_minus + np.cross(v_minus, t_help)
-
-            #s_help = 2 * t_help / (1 + np.linalg.norm(t_help) ** 2)
-            #v_plus = v_minus + np.cross(v_prime, s_help)
-
-            #self.v[ii+1] = v_plus + half_electrical_impulse
                 
-            t_help = q * self.dt * B(self.r[ii], self.iter * self.dt) / (2 * m)
-            v_prime = self.v[ii] + np.cross(self.v[ii], t_help)
+            t_help = q * self.dt * B(self.r[i], self.iter * self.dt) / (2 * m)
+            v_prime = self.v[i] + np.cross(self.v[i], t_help)
             
-            self.v[ii+1] = self.v[ii] + np.cross(v_prime, 2 * t_help / (1 + np.linalg.norm(t_help) ** 2))
-            self.r[ii+1] = self.r[ii] + self.dt * self.v[ii + 1]
-            self.Bfield[ii+1] = B(self.r[ii], self.iter * self.dt)
-
+            self.v[i+1] = self.v[i] + np.cross(v_prime, 2 * t_help / (1 + np.linalg.norm(t_help) ** 2))
+            self.r[i+1] = self.r[i] + self.dt * self.v[i + 1]
+            self.Bfield[i+1] = B(self.r[i], self.iter * self.dt)
+            
             self.iter += 1
                 
         # now save these time points to disk and set up new v and r arrays

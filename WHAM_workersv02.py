@@ -476,8 +476,38 @@ def plot_escaped_positions_3d(esc, boundary, savedir=None):
         return
     plt.show()
     plt.close(fig)
-    return fig, ax
+
+def plot_initial_positions(conf, esc, savedir=None):
+    x_esc = np.stack(esc['x0'])[:, 0]
+    y_esc = np.stack(esc['x0'])[:, 1]
+    z_esc = np.stack(esc['x0'])[:, 2]
+    
+    x_conf = np.stack(conf['x0'])[:, 0]
+    y_conf = np.stack(conf['x0'])[:, 1]
+    z_conf = np.stack(conf['x0'])[:, 2]
+    
+    fig = plt.figure(figsize=(10,8))
+    ax = fig.add_subplot(projection='3d')
+    
+    ax.scatter(x_conf, y_conf, z_conf, marker='o', c='coral', label='Confined')
+    ax.scatter(x_esc, y_esc, z_esc, marker='x', c='maroon', label='Escaped')
+    
+    ax.set_xlabel('x (ion gyroradii)')
+    ax.set_ylabel('y (ion gyroradii)')
+    ax.set_zlabel('z (ion gyroradii)')
+    plt.title('Initial positions')
+    plt.legend()
+    
+    if savedir != None:
+        plt.savefig(os.path.join(savedir, "Initial_Positions.png"))
+        plt.close(fig)
+        return
+    plt.show()
+    plt.close(fig)
 
 #NEXT STEPS:
 #   1. Plot initial positions from NBI run
 #   2. Get and plot trajectory of NBI ion
+#       a. Modify particle class to include upgrades from particlev03
+#           THINK ABOUT HOW TO DO THIS!!! (Write out workflow)
+#       b. Recreate RunNBI in WHAM_workers
