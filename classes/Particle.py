@@ -22,7 +22,7 @@ class particle(object):
         self.iter = 0
         self.outOfBounds = False
         self.success = False
-        
+        self.check_turn = check_turn
         self.save_trajectories = save_trajectories
         if self.save_trajectories:
             self.r = np.zeros((nOfSteps, 3))
@@ -33,7 +33,6 @@ class particle(object):
         else:
             self.r = init_position
             self.v = init_velocity
-            self.check_turn = check_turn
             if self.check_turn:
                 if self.v0[2] > 0:
                     self.positive_v0 = True

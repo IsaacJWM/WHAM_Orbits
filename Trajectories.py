@@ -71,7 +71,7 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
                         fname = os.path.join(filepath, "Thermal_trajectories_escaped.h5")
                     else:
                         fname = os.path.join(filepath, "Thermal_trajectories_confined.h5")
-                    ps.write_single_position_data(p,fname,f"{count}",write_mode='a')
+                    ps.write_single_position_data(p,fname,str(count),write_mode='a')
                     print("Successfully finished count:", count)
                 else:
                     print("Failed to finish count", count)
@@ -107,7 +107,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, False, False, s) 
+    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, True, False, s) 
             for pos, s in zip(positions, seeds)]
     
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
@@ -122,7 +122,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
                         fname = os.path.join(filepath, "NBI_trajectories_escaped.h5")
                     else:
                         fname = os.path.join(filepath, "NBI_trajectories_confined.h5")
-                    ps.write_single_position_data(p, fname, f'Particle number {count}', write_mode='a')
+                    ps.write_single_position_data(p, fname, str(count), write_mode='a')
                     print(f"Finished count: {count}. Iterations: {p.iter}. Time per iteration: {p.iter_time}")
                 else:
                     print("Failed to finish count", count)

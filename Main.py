@@ -1,4 +1,5 @@
 import Workers as workers
+import Trajectories as trajectories
 #import WHAM_workers as old_workers
 #import particle_sieve as ps
 import numpy as np
@@ -7,11 +8,8 @@ import os
 
 
 if __name__ == "__main__":
-    #Testing git push from new computer again
     
-    
-    
-    directory = "./data/Firebird_runs/"
+    directory = "./data/Trajectories/"
     
     if not os.path.isdir(directory):
         os.mkdir(directory)
@@ -21,7 +19,7 @@ if __name__ == "__main__":
     B0 = 1
     T = 100
     scale = 1
-    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
+    #field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     
@@ -31,9 +29,10 @@ if __name__ == "__main__":
     #old_workers.plot_z_vs_t(fname, savedir="./output/")
     #old_workers.plot_trajectory(fname, savedir="./output/")
     
-    workers.RunNBI(100000, 100000, V, dt=1, m=m, q=1, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
-        mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
-    
+    #workers.RunNBI(100000, 100000, V, dt=1, m=m, q=1, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
+    #    mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
+    #trajectories.RunNBI(1000, 10, V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
+    #    mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
     
     """
     Thermal run function call
@@ -46,14 +45,19 @@ if __name__ == "__main__":
     
     
     V = V * (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-
-    conf, esc = workers.read_data(os.path.join(directory, "NBI_output.pkl"))
     
-    workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
+    for file in os.listdir(directory):
+        trajectories.plot_trajectory(os.path.join(directory,file))
+    trajectories.plot_trajectories(directory, confined=True)
+    trajectories.plot_trajectories(directory, confined=False)
     
-    workers.get_fraction_lost(conf, esc)
+    #conf, esc = workers.read_data(os.path.join(directory, "NBI_output.pkl"))
+    
+    #workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
+    
+    #workers.get_fraction_lost(conf, esc)
     #workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")
-    workers.confinement_over_time(conf, esc, savedir="./output/")
+    #workers.confinement_over_time(conf, esc, savedir="./output/")
     #workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
     #workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
     

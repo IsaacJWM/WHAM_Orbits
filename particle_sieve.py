@@ -99,7 +99,7 @@ def write_single_position_data(p1,filename,groupname,write_mode='w-'):
             #create a new group if it doesn't already exist
             while groupname in hf.keys():
                 print("Duplicate group name: "+groupname)
-                groupname = 'v' + str(float(groupname[1:]) + 0.001)
+                groupname = groupname + "d"
             gp = hf.create_group(groupname)
 
             gp.create_dataset('r',data=p1.r[:-1])
