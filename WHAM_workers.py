@@ -15,48 +15,34 @@ import time
 import orbit_statistics
 import tracemalloc
 import pandas as pd
+from shapely.geometry import Polygon, Point
 
 sys.path.insert(0, "./classes")
 
 import particlev02 as pt
 
 
-def run_particle_in_grid(position,bFunc,vertices,norbits=100,dt=0.01,no_chunks=True,filename="_"):
+def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,save_traj=False, check_turn=True,seed=0):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
-    xloc,yloc,zloc = position
     
-    #vx = ps.select_velocities(1)
-    #vy = ps.select_velocities(1)
-    #vz = ps.select_velocities(1)
+    rng = np.random.default_rng(seed)
     
-    vx = [0.01]
-    vy = [0.01]
-    vz = [0.5]
+    vx = ps.select_velocities(1, rng)
+    vy = ps.select_velocities(1, rng)
+    vz = ps.select_velocities(1, rng)
+    v = v0 + np.array([vx[0], vy[0], vz[0]])
     
-    if no_chunks:
-        dump_size = norbits/dt
-    else:
-        dump_size = None
-        
-    p1 = pt.particle([xloc,yloc,zloc], [vx[0],vy[0],vz[0]], dt, int(norbits * 2 * np.pi / dt), silent=True)
-                        # creating the particle with the given conditions
+    p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), save_traj, check_turn)
     p1.set_boundaries(vertices=vertices)
     p1.step(bFunc)
-
-    #print("Approximate run time is {:d} velocities x {:e} iterations x {:1.4f} seconds per iteration = {:4.2f}".format(nvel, norbits/dt, p1.iter_time, nvel*norbits*p1.iter_time/dt))
     
-    if p1.outOfBounds:
-        filename = filename + "_escaped.h5"
-    else:
-        filename = filename + "_confined.h5"
-        
-    return p1, filename, vx[0]
+    return p1
 
 
 def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
-                    shaper=(0,0.4), shapez=(-1,1), filename='data//Firebird_runs//'):
+                    shaper=(0,0.4), shapez=(-1,1), filepath='data//Firebird_runs//'):
     
     field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
     
@@ -66,40 +52,89 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     bufferz = shapez[1] / 10
     rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 8, endpoint=True), nvel)
     zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 20, endpoint=True)
+    ss = np.random.SeedSequence()
+    seeds = ss.spawn(len(rr) * len(zz))
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    #for r in rr:
-    #    for z in zz:
-    #        new_run_position([0,r,z], field_data.field, vertices, norbits, dt, 
-    #                         True, filename+'_r'+str(round(r))+'_z'+str(round(z)))
-    
-    all_args = [
-        ([0, rloc, zloc], field_data.field, vertices, norbits, dt, 
-         True,filename+'_r'+str(round(rloc))+'_z'+str(round(zloc)))
+    args_unseeded = [
+        (np.array([0, rloc, zloc]), field_data.field, vertices, np.array([0,0,0]), norbits, dt, True, False)
         for zloc in zz
         for rloc in rr
         ]
     
+    all_args = [(*args, s) for args, s in zip(args_unseeded, seeds)]
+    
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(run_particle_in_grid, *args): args for args in all_args}
+        futures = {executor.submit(run_particle, *args): args for args in all_args}
         count = 0
         for future in as_completed(futures):
             try:
-                particle, filename, v = future.result()  # this re-raises the actual exception from the worker
-                ps.write_single_position_data(particle,filename,f"v{v:03.3f}",write_mode='a')
+                p = future.result()
+                if p.outOfBounds:
+                    fname = os.path.join(filepath, "Thermal_trajectories_escaped.h5")
+                else:
+                    fname = os.path.join(filepath, "Thermal_trajectories_confined.h5")
+                ps.write_single_position_data(p,fname,f"{count}",write_mode='a')
                 count += 1
-                print("Finished", filename, v, "Count:", count)
-                del particle
+                print("Finished count:", count)
             except Exception as e:
                 print(f"Worker failed with: {type(e).__name__}: {e}")
-                if e == MemoryError:
-                    
-                    break
-                continue
+                count += 1
            
-        
+def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=np.array([0,0,1]),
+           mfp=0.1, ipos=np.array([1,0,0]), rmax=0.05, filepath='data//WHAMTest//'):
+    
+    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
+    
+    mfp *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    ipos *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    rmax *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    
+    theta = np.random.uniform(0, 2*np.pi, nparticles)
+    r = np.sqrt(np.random.uniform(0, rmax ** 2, nparticles))
+    zmod = np.random.exponential(mfp, size=nparticles)
+    xmod = r * np.cos(theta)
+    ymod = r * np.sin(theta)
+    
+    arbitrary = np.array([0,1,0])
+    e1 = np.cross(vdir, arbitrary)
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(vdir, e1)
+    
+    positions = ipos + np.outer(zmod, vdir) + np.outer(xmod, e1) + np.outer(ymod, e2)
+    
+    ss = np.random.SeedSequence()
+    seeds = ss.spawn(nparticles)
+    
+    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+    
+    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, s) 
+            for pos, s in zip(positions, seeds)]
+    
+    bound = Polygon(vertices)
+    
+    max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(run_particle, *args): args for args in all_args}
+        count = 0
+        for future in as_completed(futures):
+            try:
+                p = future.result()
+                if bound.contains(Point(np.sqrt(p.r0[0]**2 + p.r0[1]**2), p.r0[2])):
+                    if p.outOfBounds:
+                        fname = os.path.join(filepath, "NBI_trajectories_escaped.h5")
+                    else:
+                        fname = os.path.join(filepath, "NBI_trajectories_confined.h5")
+                    ps.write_single_position_data(p, fname, f'Particle number {count}', write_mode='a')
+                    count += 1
+                    print(f"Finished count: {count}. Iterations: {p.iter}. Time per iteration: {p.iter_time}")
+                else:
+                    print("Particle initiated out of bounds")
+            except Exception as e:
+                print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
+                count += 1
         
 def plot_z_vs_t(file_path, savedir=None):
     file = file_path.split("/")[-1]

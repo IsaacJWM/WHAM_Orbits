@@ -15,10 +15,10 @@ import pandas as pd
 
 sys.path.insert(0, "./classes")
 
-import Particlev03 as pt
+import Better_Particle as pt
 
 
-def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,seed=0):
+def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,seed=0, save_traj=False, check_turn=True):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
@@ -30,7 +30,7 @@ def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.0
     vz = ps.select_velocities(1, rng)
     v = v0 + np.array([vx[0], vy[0], vz[0]])
     
-    p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), silent=True)
+    p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), save_traj, check_turn)
     p1.set_boundaries(vertices=vertices)
     p1.step(bFunc)
     
@@ -115,7 +115,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, s) 
+    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, s, False, True) 
             for pos, s in zip(positions, seeds)]
     
     data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
