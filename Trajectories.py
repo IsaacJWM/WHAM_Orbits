@@ -1,25 +1,19 @@
 import particle_sieve as ps
-import taylor_field_tools as tft
 import WHAMField
 import numpy as np
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from scipy.stats import maxwell
-from scipy.stats import uniform_direction
 from scipy.ndimage import gaussian_filter1d
 from scipy.integrate import solve_ivp
 import os
 import h5py
 import matplotlib.pyplot as plt
-import time
 import orbit_statistics
-import tracemalloc
 import pandas as pd
-from shapely.geometry import Polygon, Point
 
 sys.path.insert(0, "./classes")
 
-import particlev02 as pt
+import Particle as pt
 
 
 def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,save_traj=False, check_turn=True,seed=0):
@@ -72,13 +66,16 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
         for future in as_completed(futures):
             try:
                 p = future.result()
-                if p.outOfBounds:
-                    fname = os.path.join(filepath, "Thermal_trajectories_escaped.h5")
+                if p.success:
+                    if p.outOfBounds:
+                        fname = os.path.join(filepath, "Thermal_trajectories_escaped.h5")
+                    else:
+                        fname = os.path.join(filepath, "Thermal_trajectories_confined.h5")
+                    ps.write_single_position_data(p,fname,f"{count}",write_mode='a')
+                    print("Successfully finished count:", count)
                 else:
-                    fname = os.path.join(filepath, "Thermal_trajectories_confined.h5")
-                ps.write_single_position_data(p,fname,f"{count}",write_mode='a')
+                    print("Failed to finish count", count)
                 count += 1
-                print("Finished count:", count)
             except Exception as e:
                 print(f"Worker failed with: {type(e).__name__}: {e}")
                 count += 1
@@ -110,10 +107,8 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, s) 
+    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, False, False, s) 
             for pos, s in zip(positions, seeds)]
-    
-    bound = Polygon(vertices)
     
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -122,16 +117,16 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
         for future in as_completed(futures):
             try:
                 p = future.result()
-                if bound.contains(Point(np.sqrt(p.r0[0]**2 + p.r0[1]**2), p.r0[2])):
+                if p.success:
                     if p.outOfBounds:
                         fname = os.path.join(filepath, "NBI_trajectories_escaped.h5")
                     else:
                         fname = os.path.join(filepath, "NBI_trajectories_confined.h5")
                     ps.write_single_position_data(p, fname, f'Particle number {count}', write_mode='a')
-                    count += 1
                     print(f"Finished count: {count}. Iterations: {p.iter}. Time per iteration: {p.iter_time}")
                 else:
-                    print("Particle initiated out of bounds")
+                    print("Failed to finish count", count)
+                count += 1
             except Exception as e:
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 count += 1

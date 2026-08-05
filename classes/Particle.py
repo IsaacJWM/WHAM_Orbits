@@ -68,6 +68,10 @@ class particle(object):
         m = self.m
         q = self.q
         
+        # Checking initial point is within boundary
+        if not self.bound.contains(Point(np.sqrt(self.r0[0]**2 + self.r0[1]**2), self.r0[2])):
+            self.outOfBounds = True
+            return self
         
         if self.save_trajectories:
             for i in range(0, self.noOfSteps-1):
@@ -140,7 +144,7 @@ class particle(object):
         
         if not self.check_turn:
             self.success = True
-        
+
         self.iter_time = (time.time() - start) / self.iter
             
         return self

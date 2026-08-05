@@ -1,4 +1,4 @@
-import WHAM_workersv02 as workers
+import Workers as workers
 #import WHAM_workers as old_workers
 #import particle_sieve as ps
 import numpy as np

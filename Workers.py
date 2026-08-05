@@ -3,22 +3,17 @@ import WHAMField
 import numpy as np
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from scipy.stats import maxwell
-from scipy.stats import uniform_direction
 from scipy.ndimage import gaussian_filter1d
-from scipy.integrate import solve_ivp
 import os
-import h5py
 import matplotlib.pyplot as plt
-import orbit_statistics
 import pandas as pd
 
 sys.path.insert(0, "./classes")
 
-import Better_Particle as pt
+import Particle as pt
 
 
-def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,seed=0, save_traj=False, check_turn=True):
+def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,save_traj=False, check_turn=True, seed=0):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
@@ -56,13 +51,8 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    #for i, r in enumerate(rr):
-    #    for j, z in enumerate(zz):
-    #        run_particle_in_grid([0,r,z], field_data.field, vertices, norbits, dt, seeds[len(rr)*i+j])
-    #        print("Concluded particle", r, z)
-    
     args_unseeded = [
-        (np.array([0, rloc, zloc]), field_data.field, vertices, np.array([0,0,0]), norbits, dt)
+        (np.array([0, rloc, zloc]), field_data.field, vertices, np.array([0,0,0]), norbits, dt, False, True)
         for zloc in zz
         for rloc in rr
         ]
@@ -115,7 +105,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     
     vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, s, False, True) 
+    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, False, False, s) 
             for pos, s in zip(positions, seeds)]
     
     data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
