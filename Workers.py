@@ -467,9 +467,31 @@ def plot_escaped_positions_3d(esc, boundary, savedir=None):
     plt.show()
     plt.close(fig)
 
-def plot_initial_positions(conf, esc, savedir=None):
+def plot_initial_positions(conf, esc, boundary, savedir=None):
     fig = plt.figure(figsize=(10,8))
     ax = fig.add_subplot(projection='3d')
+    
+    boundary_r = boundary[:,0]
+    boundary_z = boundary[:,1]
+    theta = np.linspace(0, 2 * np.pi, 100)
+
+    # Meshgrid over boundary points and azimuthal angles
+    R, Theta = np.meshgrid(boundary_r, theta)
+    Z, _ = np.meshgrid(boundary_z, theta)
+
+    # Convert to Cartesian
+    X_surf = R * np.cos(Theta)
+    Y_surf = R * np.sin(Theta)
+    Z_surf = Z
+    
+    ax.plot_surface(
+        X_surf, Z_surf, Y_surf,   # z-axis up convention: pass y as third arg
+        alpha=0.15,                # very transparent so escape points are visible
+        color='steelblue',
+        edgecolor='none',
+        zorder=1
+    )
+    
     if len(esc) > 0:
         x_esc = np.stack(esc['x0'])[:, 0]
         y_esc = np.stack(esc['x0'])[:, 1]
