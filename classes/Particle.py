@@ -22,6 +22,8 @@ class particle(object):
         self.iter = 0
         self.outOfBounds = False
         self.success = False
+        self.iter_time = 0
+        
         self.check_turn = check_turn
         self.save_trajectories = save_trajectories
         if self.save_trajectories:

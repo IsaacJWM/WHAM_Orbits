@@ -9,7 +9,8 @@ import os
 
 if __name__ == "__main__":
     
-    directory = "./data/Trajectories/"
+    #directory = "./data/Trajectories/"
+    directory = "./data/Runs/"
     
     if not os.path.isdir(directory):
         os.mkdir(directory)
@@ -33,7 +34,8 @@ if __name__ == "__main__":
     #    mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
     #trajectories.RunNBI(1000, 10, V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
     #    mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
-    
+    workers.RunNBI(10, 10000, V, 1, m, q, T, B0, scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
+        mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
     """
     Thermal run function call
     
@@ -46,13 +48,13 @@ if __name__ == "__main__":
     
     V = V * (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
-    for file in os.listdir(directory):
-        trajectories.plot_trajectory(os.path.join(directory,file))
-    trajectories.plot_trajectories(directory, confined=True)
-    trajectories.plot_trajectories(directory, confined=False)
+    #for file in os.listdir(directory):
+    #    trajectories.plot_trajectory(os.path.join(directory,file))
+    #trajectories.plot_trajectories(directory, confined=True)
     
-    #conf, esc = workers.read_data(os.path.join(directory, "NBI_output.pkl"))
     
+    conf, esc = workers.read_data(os.path.join(directory, "NBI_output.pkl"))
+    workers.plot_initial_positions(conf, esc)
     #workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
     #workers.get_fraction_lost(conf, esc)

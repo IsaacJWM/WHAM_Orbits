@@ -468,19 +468,19 @@ def plot_escaped_positions_3d(esc, boundary, savedir=None):
     plt.close(fig)
 
 def plot_initial_positions(conf, esc, savedir=None):
-    x_esc = np.stack(esc['x0'])[:, 0]
-    y_esc = np.stack(esc['x0'])[:, 1]
-    z_esc = np.stack(esc['x0'])[:, 2]
-    
-    x_conf = np.stack(conf['x0'])[:, 0]
-    y_conf = np.stack(conf['x0'])[:, 1]
-    z_conf = np.stack(conf['x0'])[:, 2]
-    
     fig = plt.figure(figsize=(10,8))
     ax = fig.add_subplot(projection='3d')
+    if len(esc) > 0:
+        x_esc = np.stack(esc['x0'])[:, 0]
+        y_esc = np.stack(esc['x0'])[:, 1]
+        z_esc = np.stack(esc['x0'])[:, 2]
+        ax.scatter(x_esc, y_esc, z_esc, marker='x', c='maroon', label='Escaped')
     
-    ax.scatter(x_conf, y_conf, z_conf, marker='o', c='coral', label='Confined')
-    ax.scatter(x_esc, y_esc, z_esc, marker='x', c='maroon', label='Escaped')
+    if len(conf) > 0:
+        x_conf = np.stack(conf['x0'])[:, 0]
+        y_conf = np.stack(conf['x0'])[:, 1]
+        z_conf = np.stack(conf['x0'])[:, 2]
+        ax.scatter(x_conf, y_conf, z_conf, marker='o', c='coral', label='Confined')
     
     ax.set_xlabel('x (ion gyroradii)')
     ax.set_ylabel('y (ion gyroradii)')
