@@ -54,7 +54,11 @@ class particle(object):
         Used to set the boundary of our container
         '''
         self.bound = Polygon(vertices)
-
+        
+    def initiate_basic_collisions():
+        # I WILL BUILD THIS FUNCTION TOMORROW
+        pass
+    
     def step(self, B, E=Fields.nullField):
         '''
         Returns the particle object itself, after having Boris Pushed it through noOfSteps steps, in a magnetic field B.

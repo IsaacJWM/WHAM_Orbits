@@ -35,24 +35,17 @@ def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.0
     return p1
 
 
-def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
-                    shaper=(0,0.4), shapez=(-1,1), filepath='data//Firebird_runs//'):
+def RunGrid(nr, nz, nvel, norbits, dt, field, vertices, shaper, shapez, filepath='data//WHAMTest//'):
     
-    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
-    
-    shaper *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    shapez *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     bufferr = shaper[1] / 10
     bufferz = shapez[1] / 10
-    rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, 8, endpoint=True), nvel)
-    zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, 20, endpoint=True)
+    rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, nr, endpoint=True), nvel)
+    zz = np.linspace(shapez[0]+bufferz, shapez[1]-bufferz, nz, endpoint=True)
     ss = np.random.SeedSequence()
     seeds = ss.spawn(len(rr) * len(zz))
     
-    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    
     args_unseeded = [
-        (np.array([0, rloc, zloc]), field_data.field, vertices, np.array([0,0,0]), norbits, dt, True, False)
+        (np.array([0, rloc, zloc]), field, vertices, np.array([0,0,0]), norbits, dt, True, False)
         for zloc in zz
         for rloc in rr
         ]
@@ -79,15 +72,9 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
             except Exception as e:
                 print(f"Worker failed with: {type(e).__name__}: {e}")
                 count += 1
-           
-def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=np.array([0,0,1]),
-           mfp=0.1, ipos=np.array([1,0,0]), rmax=0.05, filepath='data//WHAMTest//'):
-    
-    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
-    
-    mfp *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    ipos *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    rmax *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+
+def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
+           mfp, ipos, rmax, filepath='data//WHAMTest//'):
     
     theta = np.random.uniform(0, 2*np.pi, nparticles)
     r = np.sqrt(np.random.uniform(0, rmax ** 2, nparticles))
@@ -105,9 +92,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     ss = np.random.SeedSequence()
     seeds = ss.spawn(nparticles)
     
-    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    
-    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, True, False, s) 
+    all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, True, False, s) 
             for pos, s in zip(positions, seeds)]
     
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
@@ -130,6 +115,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
             except Exception as e:
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 count += 1
+
         
 def plot_z_vs_t(file_path, savedir=None):
     file = file_path.split("/")[-1]

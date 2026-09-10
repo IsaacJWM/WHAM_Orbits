@@ -32,16 +32,8 @@ def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.0
     return p1
 
 
-def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1, 
-                    shaper=(0,0.4), shapez=(-1,1), filepath='data//WHAMTest//'):
+def RunGrid(nr, nz, nvel, norbits, dt, field, vertices, shaper, shapez, filepath='data//WHAMTest//'):
     
-    nr = 10
-    nz = 10    
-    
-    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
-    
-    shaper *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    shapez *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     bufferr = shaper[1] / 10
     bufferz = shapez[1] / 10
     rr = np.repeat(np.linspace(shaper[0]+bufferr, shaper[1]-bufferr, nr, endpoint=True), nvel)
@@ -49,10 +41,8 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     ss = np.random.SeedSequence()
     seeds = ss.spawn(len(rr) * len(zz))
     
-    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    
     args_unseeded = [
-        (np.array([0, rloc, zloc]), field_data.field, vertices, np.array([0,0,0]), norbits, dt, False, True)
+        (np.array([0, rloc, zloc]), field, vertices, np.array([0,0,0]), norbits, dt, False, True)
         for zloc in zz
         for rloc in rr
         ]
@@ -78,14 +68,9 @@ def RunGrid(norbits, nvel, vertices, dt=0.1, m=1, q=1, T=1, B0=1, scale=1,
     
     data.to_pickle(os.path.join(filepath, "thermal_output.pkl"))
 
-def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=10, vdir=np.array([0,0,1]),
-           mfp=0.1, ipos=np.array([1,0,0]), rmax=0.05, filepath='data//WHAMTest//'):
-    
-    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
-    
-    mfp *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    ipos *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    rmax *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+
+def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
+           mfp, ipos, rmax, filepath='data//WHAMTest//'):
     
     theta = np.random.uniform(0, 2*np.pi, nparticles)
     r = np.sqrt(np.random.uniform(0, rmax ** 2, nparticles))
@@ -103,9 +88,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
     ss = np.random.SeedSequence()
     seeds = ss.spawn(nparticles)
     
-    vertices *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
-    
-    all_args = [(pos, field_data.field, vertices, v * vdir, norbits, dt, False, False, s) 
+    all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, False, False, s) 
             for pos, s in zip(positions, seeds)]
     
     data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
@@ -126,6 +109,7 @@ def RunNBI(norbits, nparticles, vertices, dt=1, m=1, q=1, T=1, B0=1, scale=1, v=
                 count += 1
     
     data.to_pickle(os.path.join(filepath, "NBI_output.pkl"))
+
 
 def read_data(fname):
     df = pd.read_pickle(fname)

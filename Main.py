@@ -9,44 +9,100 @@ import os
 
 if __name__ == "__main__":
     
-    directory = "./data/Trajectories/"
-    #directory = "./data/Runs/"
     
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    
+    # Normalization parameters. Modify these to adjust particle velocities (T), mass (m), or charge (q)
     m = 2
     q = 1
     B0 = 1
     T = 100
     scale = 1
-    #field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
+    
+    # Normalization function for distances. x is an integer or a list representing distance in meters.
+    def normalize(x):
+        x *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+        return x
+    
+    # Defining the directory where data will be stored.
+    directory = "./data/Trajectories/"
+    #directory = "./data/Runs/"
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+    
+    # Loading the magnetic field
+    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
+    # Defining the boundary of WHAM in r-z space
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
+    V = normalize(V)
     
-    #particle, fname, v = old_workers.run_particle_in_grid([100, 100, 0], field_data.field, V, 10000, 1, filename="./data/WHAMTest/Troubleshooting")
-    #ps.write_single_position_data(particle,fname,f"v{v:03.3f}",write_mode='a')
+    #=================== Thermal run ===================#
+    """
+    # Defining the boundaries of the grid of starting positions.
+    shaper = np.array([1e-10,0.15])
+    shaper = normalize(shaper)
+    shapez = np.array([-0.25,0.25])
+    shapez = normalize(shapez)
     
-    #old_workers.plot_z_vs_t(fname, savedir="./output/")
-    #old_workers.plot_trajectory(fname, savedir="./output/")
+    # Defining the number of grid points in the r and z directions
+    nr = 10
+    nz = 10
     
-    #workers.RunNBI(100000, 100000, V, dt=1, m=m, q=1, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
-    #    mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
+    # Defining the length of time each particle will run for
+    norbits = 100000
+    
+    # Defining the number of particles to run at each grid point
+    nvel = 10000
+    
+    # Defining the time step between calculations
+    dt = 0.1
+    
+    # Function call for large runs, does not save trajectories
+    workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field
+                    vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
+                    filepath=directory)
+    
+    # Function call to save trajectories. ONLY USE FOR SMALL RUNS
+    trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field
+                    vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
+                    filepath=directory)
+    """
+    
+    #=================== NBI run ===================#
+    """
+    # Number of particles to calculate
+    nparticles = 100000
+    
+    # Number of orbits to run for each particle
+    norbits = 100000
+    
+    # Timestep between calculations
+    dt = 1
+    
+    # Beam velocity (as a multiple of thermal velocity T) and beam direction
+    beam_mag = 10
+    beam_dir = np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)])
+    
+    # Beam characteristics
+    # Mean free path of neutral beam particles in the plasma
+    mfp = 0.1
+    mfp = normalize(mfp)
+    # Position at which beam enters the plasma
+    ipos = np.array([-0.2, 0, -0.2])
+    ipos = normalize(ipos)
+    # radius of the beam
+    rmax = 0.05
+    rmax = normalize(rmax)
+    
+    
+    # Function call for large runs, does not save trajectories
+    workers.RunNBI(nparticles=nparticles, norbits=norbits, dt=dt, field=field_data.field, vertices=V,
+        beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, filepath=directory)
+    
+    # Function call to save trajectories. ONLY USE FOR SMALL RUNS
     trajectories.RunNBI(100000, 10, V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
         mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
-    #workers.RunNBI(100000, 10, V, 1, m, q, T, B0, scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
-    #    mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
-    """
-    Thermal run function call
-    
-    print("Function starting")
-    workers.RunGrid(norbits=100000, nvel=10000, vertices=V, dt=1, m=m, q=q, T=T, B0=B0, scale=scale, 
-                    shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), filepath=directory)
-    print("Function closed")
     """
     
-    
-    V = V * (scale/0.000102) *np.sqrt(m*T) / (q*B0)
     
     for file in os.listdir(directory):
         trajectories.plot_trajectory(os.path.join(directory,file))
@@ -65,7 +121,7 @@ if __name__ == "__main__":
     
     #workers.plot_3d_fieldlines(field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0))
 
-
+    
 
 
 
