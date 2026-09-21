@@ -183,7 +183,7 @@ def confinement_over_time(conf, esc, smooth=True, savedir=None):
     ax.set_ylabel('Proportion of Particles Confined', fontsize=13)
     ax.set_title("Particle confinement over time", fontsize=14)
     ax.set_xlim(0, tfinal[0])
-    ax.set_ylim(min(survival)-0.02, 1.02)
+    ax.set_ylim(min(survival)-0.02, 1.0)
     ax.tick_params(labelsize=11)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -496,6 +496,79 @@ def plot_initial_positions(conf, esc, boundary, savedir=None):
     
     if savedir != None:
         plt.savefig(os.path.join(savedir, "Initial_Positions.png"))
+        plt.close(fig)
+        return
+    plt.show()
+    plt.close(fig)
+
+def plot_magnetic_field(field, xrange, zrange, nx=100, nz=200, density=1.5, figsize=(10, 6), savedir=None):
+    """
+    field:  function(x, y, z) -> (Bx, By, Bz) in Cartesian coordinates
+    xrange: tuple (xmin, xmax) for the vertical axis
+    zrange: tuple (zmin, zmax) for the horizontal axis
+    nx:     number of grid points along x
+    nz:     number of grid points along z
+    """
+
+    # ----------------------------------------------------------------
+    # 1. Build grid and evaluate field at every point
+    # ----------------------------------------------------------------
+    x = np.linspace(xrange[0], xrange[1], nx)
+    z = np.linspace(zrange[0], zrange[1], nz)
+
+    # streamplot expects field arrays of shape (len(x), len(z))
+    # i.e. (ny, nx) in streamplot's convention where x is horizontal
+    BX = np.zeros((nx, nz))
+    BZ = np.zeros((nx, nz))
+    BMAG = np.zeros((nx, nz))
+
+    for i, xi in enumerate(x):
+        for j, zj in enumerate(z):
+            B = field(np.array([xi, 0, zj]))   # y=0 cross-section
+            BX[i, j] = B[0]
+            BZ[i, j] = B[2]
+            BMAG[i, j] = np.sqrt(B[0]**2 + B[1]**2 + B[2]**2)
+
+    # Normalize for streamplot so line density doesn't cluster in strong-field regions
+    BX_norm = BX / (BMAG + 1e-10)
+    BZ_norm = BZ / (BMAG + 1e-10)
+
+    # ----------------------------------------------------------------
+    # 2. Plot
+    # ----------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Background color showing field magnitude
+    im = ax.pcolormesh(
+        z, x, BMAG,
+        cmap='plasma',
+        shading='gouraud'
+    )
+    fig.colorbar(im, ax=ax, label='|B|', pad=0.02)
+
+    # Field lines
+    strm = ax.streamplot(
+        z, x,           # horizontal axis is z, vertical axis is x
+        BZ_norm, BX_norm,
+        color='white',
+        linewidth=1.0,
+        density=density,
+        arrowsize=1.0,
+    )
+
+    ax.set_xlabel('z (normalized)', fontsize=13)
+    ax.set_ylabel('x (normalized)', fontsize=13)
+    ax.set_title('Magnetic Field', fontsize=14)
+    ax.set_xlim(zrange)
+    ax.set_ylim(xrange)
+    ax.tick_params(labelsize=11)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    
+    if savedir != None:
+        plt.savefig(os.path.join(savedir, "Magnetic_field.png"))
         plt.close(fig)
         return
     plt.show()
