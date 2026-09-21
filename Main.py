@@ -5,6 +5,8 @@ import Trajectories as trajectories
 import numpy as np
 import WHAMField
 import os
+import classes.Fields as Fields
+import particle_sieve as ps
 
 
 if __name__ == "__main__":
@@ -35,6 +37,14 @@ if __name__ == "__main__":
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     V = normalize(V)
     
+    # Getting plots for poster
+    ss = np.random.SeedSequence()
+    #p = trajectories.run_particle([10**(-15), 0, 1], Fields.getWireField, [[0, -1000], [1000, -1000], [1000, 1000], [0, 1000]], norbits=5, seed=ss.spawn(1)[0])
+    #ps.write_single_position_data(p,os.path.join(directory, "Wire_field.h5"),'1',write_mode='a')
+    trajectories.plot_z_vs_x(os.path.join(directory, "Wire_field.h5"), directory)
+    trajectories.plot_trajectory(os.path.join(directory, "Wire_field.h5"), directory)
+    
+    
     #=================== Thermal run ===================#
     """
     # Defining the boundaries of the grid of starting positions.
@@ -57,15 +67,16 @@ if __name__ == "__main__":
     dt = 0.1
     
     # Function call for large runs, does not save trajectories
-    workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field
-                    vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
-                    filepath=directory)
+    #workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
+    #                vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
+    #                filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
-    trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field
+    trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
                     vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
                     filepath=directory)
     """
+    
     
     #=================== NBI run ===================#
     """
@@ -104,9 +115,9 @@ if __name__ == "__main__":
     """
     
     
-    for file in os.listdir(directory):
-        trajectories.plot_trajectory(os.path.join(directory,file))
-    trajectories.plot_trajectories(directory, confined=True)
+    #for file in os.listdir(directory):
+    #    trajectories.plot_trajectory(os.path.join(directory,file))
+    #trajectories.plot_trajectories(directory, confined=True)
     
     
     #conf, esc = workers.read_data(os.path.join(directory, "NBI_output.pkl"))

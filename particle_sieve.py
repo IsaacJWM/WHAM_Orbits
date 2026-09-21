@@ -104,7 +104,6 @@ def write_single_position_data(p1,filename,groupname,write_mode='w-'):
 
             gp.create_dataset('r',data=p1.r[:-1])
             gp.create_dataset('v',data=p1.v[:-1])
-            gp.create_dataset('B',data=p1.Bfield[:-1])
             # subtract 1 from the shape for initial condition
 
             gp.create_dataset('iter', data=[p1.iter])

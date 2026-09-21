@@ -139,6 +139,19 @@ def getSpheromakField(r, t):
     return B_vector
 
 
+def getWireField(r, t):
+    
+    B0 = 1
+    rmag = np.sqrt(r[1]**2 + r[2]**2)
+    rhat = r / rmag
+    rhat[0] = 0
+    
+    bhat = np.cross(np.array([1, 0, 0]), rhat)
+    B_vector = bhat * B0 / rmag
+    
+    return B_vector
+
+
 def getDipoleField(r, t):
     # magnetic moment, s.t M0 = field strength one proton radius from origin on the xy plane
     M0 = -1000

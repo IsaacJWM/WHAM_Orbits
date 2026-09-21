@@ -16,7 +16,7 @@ sys.path.insert(0, "./classes")
 import Particle as pt
 
 
-def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,save_traj=False, check_turn=True,seed=0):
+def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,save_traj=True, check_turn=False,seed=0):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
@@ -27,6 +27,7 @@ def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.0
     vy = ps.select_velocities(1, rng)
     vz = ps.select_velocities(1, rng)
     v = v0 + np.array([vx[0], vy[0], vz[0]])
+    v = np.array([1,10**(-15),10**(-15)])
     
     p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), save_traj, check_turn)
     p1.set_boundaries(vertices=vertices)
@@ -116,7 +117,20 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 count += 1
 
-        
+def plot_z_vs_x(file_path, savedir=None):
+    file = file_path.split("/")[-1]
+    with h5py.File(file_path, mode='r') as ff:
+        for i, v in enumerate(ff.keys()):
+            plt.plot(ff[v]["r"][:,0], ff[v]['r'][:,2], cmap='viridis')
+            plt.xlabel("X-position")
+            plt.ylabel("Z-position")
+            plt.title("Particle in a Wire Field")
+            if savedir != None:
+                plt.savefig(os.path.join(savedir, f"Z_vs_t_File_{file}_Vel_{i}.png"))
+            plt.show()
+            plt.close()
+
+    
 def plot_z_vs_t(file_path, savedir=None):
     file = file_path.split("/")[-1]
     with h5py.File(file_path, mode='r') as ff:
@@ -134,13 +148,15 @@ def plot_trajectory(file_path, savedir=None):
     file = file_path.split("/")[-1]
     with h5py.File(file_path, mode='r') as ff:
         for i, v in enumerate(ff.keys()):
+            print(ff[v]['r'][:])
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(*ff[v]['r'][:].T, c=np.arange(len(ff[v]['r'])), cmap='viridis', s=2)
             ax.set_xlabel("x")
             ax.set_ylabel("y")
             ax.set_zlabel("z")
-            plt.title(f"File {file}, Particle number {i}")
+            #plt.title(f"File {file}, Particle number {i}")
+            plt.title("Particle in a Wire Field")
             if savedir != None:
                 plt.savefig(os.path.join(savedir, f"Trajectory_File_{file}_Vel_{i}.png"))
             plt.show()
