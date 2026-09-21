@@ -183,7 +183,7 @@ def confinement_over_time(conf, esc, smooth=True, savedir=None):
     ax.set_ylabel('Proportion of Particles Confined', fontsize=13)
     ax.set_title("Particle confinement over time", fontsize=14)
     ax.set_xlim(0, tfinal[0])
-    ax.set_ylim(0, 1.02)
+    ax.set_ylim(min(survival)-0.02, 1.02)
     ax.tick_params(labelsize=11)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)

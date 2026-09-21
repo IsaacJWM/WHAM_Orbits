@@ -37,13 +37,16 @@ if __name__ == "__main__":
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     V = normalize(V)
     
+    
+    
     # Getting plots for poster
+    """
     ss = np.random.SeedSequence()
     #p = trajectories.run_particle([10**(-15), 0, 1], Fields.getWireField, [[0, -1000], [1000, -1000], [1000, 1000], [0, 1000]], norbits=5, seed=ss.spawn(1)[0])
     #ps.write_single_position_data(p,os.path.join(directory, "Wire_field.h5"),'1',write_mode='a')
     trajectories.plot_z_vs_x(os.path.join(directory, "Wire_field.h5"), directory)
     trajectories.plot_trajectory(os.path.join(directory, "Wire_field.h5"), directory)
-    
+    """
     
     #=================== Thermal run ===================#
     """
