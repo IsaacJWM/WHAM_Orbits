@@ -42,12 +42,12 @@ if __name__ == "__main__":
     # Getting plots for poster
     #workers.plot_magnetic_field(field_data.field, normalize(np.array([-0.75, 0.75])), normalize(np.array([-1., 1.])), savedir=directory)
     
-    ss = np.random.SeedSequence()
+    #ss = np.random.SeedSequence()
     #p = trajectories.run_particle([1000, 10**(-15), 10**(-15)], field_data.field, V, norbits=100000, dt=1, seed=ss.spawn(1)[0])
     #ps.write_single_position_data(p,os.path.join(directory, "Particle.h5"),'1',write_mode='a')
     #trajectories.plot_z_vs_x(os.path.join(directory, "Wire_field.h5"), directory)
     #trajectories.plot_trajectory(os.path.join(directory, "Particle.h5"), directory)
-    trajectories.plot_z_vs_t(os.path.join(directory, "Particle.h5"), directory)
+    #trajectories.plot_z_vs_t(os.path.join(directory, "Particle.h5"), directory)
     #=================== Thermal run ===================#
     """
     # Defining the boundaries of the grid of starting positions.
