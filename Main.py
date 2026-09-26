@@ -13,15 +13,15 @@ if __name__ == "__main__":
     
     
     # Normalization parameters. Modify these to adjust particle velocities (T), mass (m), or charge (q)
-    m = 2
-    q = 1
+    m = 1/1836
+    q = -1
     B0 = 1
     T = 50
     scale = 1
     
     # Normalization function for distances. x is an integer or a list representing distance in meters.
     def normalize(x):
-        x *= (scale/0.000102) *np.sqrt(m*T) / (q*B0)
+        x *= np.abs((scale/0.000102) *np.sqrt(m*T) / (q*B0))
         return x
     
     # Defining the directory where data will be stored.
@@ -31,7 +31,7 @@ if __name__ == "__main__":
         os.mkdir(directory)
     
     # Loading the magnetic field
-    field_data = WHAMField.WHAMField(m=m, q=q, B0=B0, T=T, scale=scale)
+    field_data = WHAMField.WHAMField(m=m, q=np.abs(q), B0=B0, T=T, scale=scale)
     # Defining the boundary of WHAM in r-z space
     V = np.array([[0,-1], [0.0557, -1], [0.0557, -0.776], [0.2, -0.776], 
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
