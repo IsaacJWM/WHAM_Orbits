@@ -55,8 +55,21 @@ class particle(object):
         '''
         self.bound = Polygon(vertices)
         
-    def initiate_basic_collisions():
-        # I WILL BUILD THIS FUNCTION TOMORROW
+    def initiate_basic_collisions(self, mfp):
+        
+        vmag = np.linalg.norm(self.v0)
+        tot_dist = self.noOfSteps * self.dt * vmag
+        current_dist = 0
+        collision_distances = []
+        while current_dist < tot_dist:
+            col_dist = 0 #FUNCTION FOR CALCULATING COLLISION PROBABILITY HERE
+            current_dist += col_dist
+            collision_distances.append(col_dist)
+        self.collision_distances = np.array(collision_distances)
+        self.collisions = True
+        
+    def run_collision(self, v):
+        
         pass
     
     def step(self, B, E=Fields.nullField):
