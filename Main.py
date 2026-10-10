@@ -75,9 +75,9 @@ if __name__ == "__main__":
     #                filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
-    workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
-                    vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
-                    filepath=directory)
+    #trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
+    #                vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
+    #                filepath=directory)
     
     
     
@@ -124,8 +124,16 @@ if __name__ == "__main__":
     
     
     conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))
-    workers.plot_initial_positions(conf, esc, V)
-    workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
+    print(len(conf))
+    fpos = np.stack(conf['xf'])
+    print(max(fpos[0]))
+    print(max(fpos[1]))
+    print(max(fpos[2]))
+    print(V)
+    print(min(conf['iter']))
+    
+    workers.plot_initial_positions(conf, esc, V, savedir="./output/")
+    #workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
     workers.get_fraction_lost(conf, esc)
     workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")

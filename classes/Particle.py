@@ -149,12 +149,10 @@ class particle(object):
                 
                 if self.check_turn:
                     if self.positive_v0 and self.v[2] < 0:
-                        self.iter = self.noOfSteps
                         self.success = True
                         break
                 
                     elif not self.positive_v0 and self.v[2] > 0:
-                        self.iter = self.noOfSteps
                         self.success = True
                         break
                 
