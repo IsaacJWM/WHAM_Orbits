@@ -70,14 +70,12 @@ if __name__ == "__main__":
     dt = 0.1
     
     # Function call for large runs, does not save trajectories
-    #workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
-    #                vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
-    #                filepath=directory)
+    workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
+                    vertices=V, shaper=shaper, shapez=shapez, filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
     #trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
-    #                vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
-    #                filepath=directory)
+    #                vertices=V, shaper=shaper, shapez=shapez, filepath=directory)
     
     
     
@@ -122,7 +120,7 @@ if __name__ == "__main__":
     #    trajectories.plot_trajectory(os.path.join(directory,file))
     #trajectories.plot_trajectories(directory, confined=True)
     
-    
+
     conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))
     print(len(conf))
     fpos = np.stack(conf['xf'])
