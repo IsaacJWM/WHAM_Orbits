@@ -75,7 +75,7 @@ if __name__ == "__main__":
     #                filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
-    trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
+    workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
                     vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
                     filepath=directory)
     
