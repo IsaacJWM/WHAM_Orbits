@@ -25,8 +25,8 @@ if __name__ == "__main__":
         return x
     
     # Defining the directory where data will be stored.
-    directory = "./data/Trajectories/"
-    #directory = "./data/Runs/"
+    #directory = "./data/Trajectories/"
+    directory = "./data/Firebird_runs/"
     if not os.path.isdir(directory):
         os.mkdir(directory)
     
