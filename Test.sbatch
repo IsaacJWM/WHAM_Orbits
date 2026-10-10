@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=NBI_run
+#SBATCH --job-name=thermal_run_test
 #SBATCH --output=output.txt
 #SBATCH --error=error.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=128
-#SBATCH --mem=32G
-#SBATCH --time=8:00:00
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=16G
+#SBATCH --time=2:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=isaacwrightmuller@gmail.com
 

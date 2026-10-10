@@ -13,15 +13,15 @@ if __name__ == "__main__":
     
     
     # Normalization parameters. Modify these to adjust particle velocities (T), mass (m), or charge (q)
-    m = 1/1836
-    q = -1
+    m = 2
+    q = 1
     B0 = 1
     T = 50
     scale = 1
     
     # Normalization function for distances. x is an integer or a list representing distance in meters.
     def normalize(x):
-        x *= np.abs((scale/0.000102) *np.sqrt(m*T) / (q*B0))
+        x *= (scale/0.000102) *np.sqrt(m*T) / (np.abs(q)*B0)
         return x
     
     # Defining the directory where data will be stored.
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     #trajectories.plot_trajectory(os.path.join(directory, "Particle.h5"), directory)
     #trajectories.plot_z_vs_t(os.path.join(directory, "Particle.h5"), directory)
     #=================== Thermal run ===================#
-    """
+    
     # Defining the boundaries of the grid of starting positions.
     shaper = np.array([1e-10,0.15])
     shaper = normalize(shaper)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     norbits = 100000
     
     # Defining the number of particles to run at each grid point
-    nvel = 10000
+    nvel = 10
     
     # Defining the time step between calculations
     dt = 0.1
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
                     vertices=V, shaper=np.array([1e-10,0.15]), shapez=np.array([-0.25,0.25]), 
                     filepath=directory)
-    """
+    
     
     
     #=================== NBI run ===================#
@@ -123,15 +123,15 @@ if __name__ == "__main__":
     #trajectories.plot_trajectories(directory, confined=True)
     
     
-    #conf, esc = workers.read_data(os.path.join(directory, "NBI_output.pkl"))
-    #workers.plot_initial_positions(conf, esc, V)
-    #workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
+    conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))
+    workers.plot_initial_positions(conf, esc, V)
+    workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
-    #workers.get_fraction_lost(conf, esc)
-    #workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")
-    #workers.confinement_over_time(conf, esc, savedir="./output/")
-    #workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
-    #workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
+    workers.get_fraction_lost(conf, esc)
+    workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")
+    workers.confinement_over_time(conf, esc, savedir="./output/")
+    workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
+    workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
     
     #workers.plot_3d_fieldlines(field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0))
 
