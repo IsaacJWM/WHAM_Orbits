@@ -15,13 +15,14 @@ class particle(object):
         '''
         self.r0 = init_position
         self.v0 = init_velocity
-        self.m = 1
+        self.m = 2
         self.q = 1
         self.dt = dt
         self.noOfSteps = nOfSteps
         self.iter = 0
         self.outOfBounds = False
         self.success = False
+        self.collisions = False
         self.iter_time = 0
         
         self.check_turn = check_turn
@@ -55,23 +56,63 @@ class particle(object):
         '''
         self.bound = Polygon(vertices)
         
-    def initiate_basic_collisions(self, mfp):
+    def initiate_basic_collisions(self, ni):
         
         vmag = np.linalg.norm(self.v0)
-        tot_dist = self.noOfSteps * self.dt * vmag
-        current_dist = 0
-        collision_distances = []
-        while current_dist < tot_dist:
-            col_dist = 0 #FUNCTION FOR CALCULATING COLLISION PROBABILITY HERE
-            current_dist += col_dist
-            collision_distances.append(col_dist)
-        self.collision_distances = np.array(collision_distances)
+        tot_time = self.noOfSteps / self.dt
+        
+        # Doc calculated this. I don't fully understand it.
+        coulomb_log = 18
+        
+        nu_d = 3.342171 * coulomb_log * ((self.q**4) / (self.m**2)) * (ni / (vmag**3))
+        
+        print(nu_d)
+        
+        collision_steps = []
+        step = 0
+    
+        while step < tot_time:
+            # Draw waiting time until next collision from exponential distribution
+            # mean waiting time is 1/nu_perp
+            waiting_time = np.random.exponential(scale=1.0 / nu_d)
+            steps_to_wait = int(waiting_time / self.dt)
+            step += steps_to_wait
+        
+            if step < tot_time:
+                collision_steps.append(step)
+        
+        self.collision_steps = np.array(collision_steps)
         self.collisions = True
+        self.check_turn = False
+        
+        print(self.collision_steps)
         
     def run_collision(self, v):
-        
-        pass
+        speed = np.linalg.norm(v)
     
+        # Deflection angle: standard deviation = sqrt(nu_perp * tau)
+        delta_theta = np.random.normal(0, 1)
+        delta_phi = np.random.uniform(0, 2 * np.pi)  # random azimuthal direction of kick
+        
+        # Build local coordinate system around current v direction
+        vhat = v / speed
+        
+        # Find a perpendicular vector
+        if abs(vhat[0]) < 0.9:
+            arbitrary = np.array([1.0, 0.0, 0.0])
+        else:
+            arbitrary = np.array([0.0, 1.0, 0.0])
+                
+        e1 = np.cross(vhat, arbitrary)
+        e1 /= np.linalg.norm(e1)
+        e2 = np.cross(vhat, e1)
+    
+        # Rotate v by delta_theta toward a random perpendicular direction
+        perp_dir = np.cos(delta_phi) * e1 + np.sin(delta_phi) * e2
+        v_new = speed * (np.cos(delta_theta) * vhat + np.sin(delta_theta) * perp_dir)
+        
+        return v_new
+        
     def step(self, B, E=Fields.nullField):
         '''
         Returns the particle object itself, after having Boris Pushed it through noOfSteps steps, in a magnetic field B.
@@ -128,6 +169,12 @@ class particle(object):
                 self.r[i+1] = self.r[i] + self.dt * self.v[i + 1]
                 self.Bfield[i+1] = B(self.r[i], self.iter * self.dt)
                 
+                if self.collisions:
+                    collision_counter = 0
+                    if self.iter == self.collision_steps[collision_counter]:
+                        collision_counter += 1
+                        self.v[i+1] = self.run_collision(self.v[i+1])
+                
                 self.iter += 1
         
         elif not self.save_trajectories:
@@ -146,6 +193,12 @@ class particle(object):
                 
                 self.v = self.v + np.cross(v_prime, 2 * t_help / (1 + np.linalg.norm(t_help) ** 2))
                 self.r = self.r + self.dt * self.v
+                
+                if self.collisions:
+                    collision_counter = 0
+                    if self.iter == self.collision_steps[collision_counter]:
+                        collision_counter += 1
+                        self.v = self.run_collision(self.v)
                 
                 if self.check_turn:
                     if self.positive_v0 and self.v[2] < 0:

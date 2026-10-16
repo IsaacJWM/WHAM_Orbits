@@ -37,6 +37,11 @@ if __name__ == "__main__":
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     V = normalize(V)
     
+    # Density of WHAM, normalized:
+    ni = 10**19
+    ni = ni / normalize(normalize(normalize(1)))
+    print(ni)
+    
     
     
     # Getting plots for poster
@@ -49,7 +54,7 @@ if __name__ == "__main__":
     #trajectories.plot_trajectory(os.path.join(directory, "Particle.h5"), directory)
     #trajectories.plot_z_vs_t(os.path.join(directory, "Particle.h5"), directory)
     #=================== Thermal run ===================#
-    
+    """
     # Defining the boundaries of the grid of starting positions.
     shaper = np.array([1e-10,0.15])
     shaper = normalize(shaper)
@@ -70,17 +75,17 @@ if __name__ == "__main__":
     dt = 0.1
     
     # Function call for large runs, does not save trajectories
-    workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
-                    vertices=V, shaper=shaper, shapez=shapez, filepath=directory)
+    #workers.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
+    #                vertices=V, shaper=shaper, shapez=shapez, ni=None, filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
     #trajectories.RunGrid(nr=nr, nz=nz, nvel=nvel, norbits=norbits, dt=dt, field=field_data.field,
-    #                vertices=V, shaper=shaper, shapez=shapez, filepath=directory)
-    
+    #                vertices=V, shaper=shaper, shapez=shapez, ni=None filepath=directory)
+    """
     
     
     #=================== NBI run ===================#
-    """
+
     # Number of particles to calculate
     nparticles = 100000
     
@@ -107,37 +112,33 @@ if __name__ == "__main__":
     
     
     # Function call for large runs, does not save trajectories
-    workers.RunNBI(nparticles=nparticles, norbits=norbits, dt=dt, field=field_data.field, vertices=V,
-        beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, filepath=directory)
+    #workers.RunNBI(nparticles=nparticles, norbits=norbits, dt=dt, field=field_data.field, vertices=V,
+    #    beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, ni=ni, filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
-    trajectories.RunNBI(100000, 10, V, dt=0.1, m=m, q=q, T=T, B0=B0, scale=scale, v=10, vdir=np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)]),
-        mfp=0.1, ipos=np.array([-0.2, 0, -0.2]), rmax=0.05, filepath=directory)
-    """
+    trajectories.RunNBI(nparticles=nparticles, norbits=norbits, dt=dt, field=field_data.field, vertices=V, 
+        beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, ni=ni, filepath=directory)
+
     
     
     #for file in os.listdir(directory):
     #    trajectories.plot_trajectory(os.path.join(directory,file))
-    #trajectories.plot_trajectories(directory, confined=True)
+    trajectories.plot_trajectories(directory, confined=True)
+    trajectories.plot_trajectories(directory, confined=False)
+    trajectories.plot_zs_vs_t(directory, confined=True)
+    trajectories.plot_zs_vs_t(directory, confined=False)
     
 
-    conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))
-    print(len(conf))
-    fpos = np.stack(conf['xf'])
-    print(max(fpos[0]))
-    print(max(fpos[1]))
-    print(max(fpos[2]))
-    print(V)
-    print(min(conf['iter']))
+    #conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))
     
-    workers.plot_initial_positions(conf, esc, V, savedir="./output/")
+    #workers.plot_initial_positions(conf, esc, V, savedir="./output/")
     #workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
-    workers.get_fraction_lost(conf, esc)
-    workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")
-    workers.confinement_over_time(conf, esc, savedir="./output/")
-    workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
-    workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
+    #workers.get_fraction_lost(conf, esc)
+    #workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")
+    #workers.confinement_over_time(conf, esc, savedir="./output/")
+    #workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
+    #workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
     
     #workers.plot_3d_fieldlines(field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0))
 

@@ -16,7 +16,8 @@ sys.path.insert(0, "./classes")
 import Particle as pt
 
 
-def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,save_traj=True, check_turn=False,seed=0):
+def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.01,
+                 save_traj=True, check_turn=False, ni=None, seed=0):
     """
     Takes a particle's starting position, generates a randoom velocity, and runs the particle.
     """
@@ -30,12 +31,14 @@ def run_particle(position,bFunc,vertices,v0=np.array([0,0,0]),norbits=100,dt=0.0
     
     p1 = pt.particle(position, v, dt, int(norbits * 2 * np.pi / dt), save_traj, check_turn)
     p1.set_boundaries(vertices=vertices)
+    if ni != None:
+        p1.initiate_basic_collisions(ni)
     p1.step(bFunc)
     
     return p1
 
 
-def RunGrid(nr, nz, nvel, norbits, dt, field, vertices, shaper, shapez, filepath='data//WHAMTest//'):
+def RunGrid(nr, nz, nvel, norbits, dt, field, vertices, shaper, shapez, ni=None, filepath='data//WHAMTest//'):
     
     bufferr = shaper[1] / 10
     bufferz = shapez[1] / 10
@@ -45,7 +48,7 @@ def RunGrid(nr, nz, nvel, norbits, dt, field, vertices, shaper, shapez, filepath
     seeds = ss.spawn(len(rr) * len(zz))
     
     args_unseeded = [
-        (np.array([0, rloc, zloc]), field, vertices, np.array([0,0,0]), norbits, dt, True, False)
+        (np.array([0, rloc, zloc]), field, vertices, np.array([0,0,0]), norbits, dt, True, False, ni)
         for zloc in zz
         for rloc in rr
         ]
@@ -74,7 +77,7 @@ def RunGrid(nr, nz, nvel, norbits, dt, field, vertices, shaper, shapez, filepath
                 count += 1
 
 def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
-           mfp, ipos, rmax, filepath='data//WHAMTest//'):
+           mfp, ipos, rmax, ni=None, filepath='data//WHAMTest//'):
     
     theta = np.random.uniform(0, 2*np.pi, nparticles)
     r = np.sqrt(np.random.uniform(0, rmax ** 2, nparticles))
@@ -92,7 +95,7 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
     ss = np.random.SeedSequence()
     seeds = ss.spawn(nparticles)
     
-    all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, True, False, s) 
+    all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, True, False, ni, s) 
             for pos, s in zip(positions, seeds)]
     
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
