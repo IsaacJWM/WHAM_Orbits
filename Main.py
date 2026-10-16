@@ -25,8 +25,8 @@ if __name__ == "__main__":
         return x
     
     # Defining the directory where data will be stored.
-    #directory = "./data/Trajectories/"
-    directory = "./data/Firebird_runs/"
+    directory = "./data/Trajectories/"
+    #directory = "./data/Firebird_runs/"
     if not os.path.isdir(directory):
         os.mkdir(directory)
     
@@ -87,13 +87,13 @@ if __name__ == "__main__":
     #=================== NBI run ===================#
 
     # Number of particles to calculate
-    nparticles = 100000
+    nparticles = 2
     
     # Number of orbits to run for each particle
-    norbits = 100000
+    norbits = 10000
     
     # Timestep between calculations
-    dt = 1
+    dt = 0.2
     
     # Beam velocity (as a multiple of thermal velocity T) and beam direction
     beam_mag = 10
