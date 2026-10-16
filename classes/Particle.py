@@ -59,7 +59,7 @@ class particle(object):
     def initiate_basic_collisions(self, ni):
         
         vmag = np.linalg.norm(self.v0)
-        tot_time = self.noOfSteps / self.dt
+        tot_time = self.noOfSteps
         
         # Doc calculated this. I don't fully understand it.
         coulomb_log = 18
@@ -79,7 +79,7 @@ class particle(object):
             step += steps_to_wait
         
             if step < tot_time:
-                collision_steps.append(step)
+                collision_steps.append(step / self.dt)
         
         self.collision_steps = np.array(collision_steps)
         self.collisions = True

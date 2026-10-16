@@ -98,6 +98,19 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
     all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, True, False, ni, s) 
             for pos, s in zip(positions, seeds)]
     
+    p = run_particle(*all_args[0])
+    if p.success:
+        if p.outOfBounds:
+            fname = os.path.join(filepath, "NBI_trajectories_escaped.h5")
+        else:
+            fname = os.path.join(filepath, "NBI_trajectories_confined.h5")
+        ps.write_single_position_data(p, fname, 'trial', write_mode='a')
+        print("Finished particle")
+    else:
+        print("Failed to finish particle")
+    
+    """
+    
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(run_particle, *args): args for args in all_args}
@@ -118,6 +131,7 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
             except Exception as e:
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 count += 1
+                """
 
 def plot_z_vs_x(file_path, savedir=None):
     file = file_path.split("/")[-1]
@@ -176,6 +190,7 @@ def plot_zs_vs_t(directory, confined=True, savedir=None):
     plt.title("Particle positions vs time")
     if savedir != None:
         plt.savefig(os.path.join(savedir, "Z_vs_time.png"))
+    plt.show()
     plt.close()
 
 def plot_trajectories(directory, confined=True, savedir=None):

@@ -87,16 +87,16 @@ if __name__ == "__main__":
     #=================== NBI run ===================#
 
     # Number of particles to calculate
-    nparticles = 2
+    nparticles = 10
     
     # Number of orbits to run for each particle
     norbits = 10000
     
     # Timestep between calculations
-    dt = 0.2
+    dt = 0.1
     
-    # Beam velocity (as a multiple of thermal velocity T) and beam direction
-    beam_mag = 10
+    # Beam velocity and beam direction
+    beam_mag = 10 * T
     beam_dir = np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)])
     
     # Beam characteristics
