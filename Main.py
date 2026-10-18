@@ -37,10 +37,8 @@ if __name__ == "__main__":
         [0.2, 0.776], [0.0557, 0.776], [0.0557, 1], [0, 1]])
     V = normalize(V)
     
-    # Density of WHAM, normalized:
-    ni = 10**19
-    ni = ni / normalize(normalize(normalize(1)))
-    print(ni)
+    # Density of WHAM, in cm^-3:
+    ni = 10**13
     
     
     
@@ -87,16 +85,16 @@ if __name__ == "__main__":
     #=================== NBI run ===================#
 
     # Number of particles to calculate
-    nparticles = 10
+    nparticles = 1
     
     # Number of orbits to run for each particle
-    norbits = 10000
+    norbits = 100000
     
     # Timestep between calculations
-    dt = 0.1
+    dt = 0.25
     
     # Beam velocity and beam direction
-    beam_mag = 10 * T
+    beam_mag = 10*T
     beam_dir = np.array([1/np.sqrt(2), 0, 1/np.sqrt(2)])
     
     # Beam characteristics
@@ -116,17 +114,15 @@ if __name__ == "__main__":
     #    beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, ni=ni, filepath=directory)
     
     # Function call to save trajectories. ONLY USE FOR SMALL RUNS
-    trajectories.RunNBI(nparticles=nparticles, norbits=norbits, dt=dt, field=field_data.field, vertices=V, 
-        beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, ni=ni, filepath=directory)
+    #trajectories.RunNBI(nparticles=nparticles, norbits=norbits, dt=dt, field=field_data.field, vertices=V, 
+    #    beam_v=beam_mag, vdir=beam_dir, mfp=mfp, ipos=ipos, rmax=rmax, ni=ni, filepath=directory)
 
     
     
     #for file in os.listdir(directory):
     #    trajectories.plot_trajectory(os.path.join(directory,file))
-    trajectories.plot_trajectories(directory, confined=True)
-    trajectories.plot_trajectories(directory, confined=False)
-    trajectories.plot_zs_vs_t(directory, confined=True)
-    trajectories.plot_zs_vs_t(directory, confined=False)
+    trajectories.plot_trajectory("C:/Users/iwrig/Dropbox/Summer 2026/WHAM_Orbits/data/Trajectories/NBI_trajectories_confined.h5")
+    trajectories.plot_z_vs_t("C:/Users/iwrig/Dropbox/Summer 2026/WHAM_Orbits/data/Trajectories/NBI_trajectories_confined.h5")
     
 
     #conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))

@@ -19,6 +19,7 @@ class particle(object):
         self.q = 1
         self.dt = dt
         self.noOfSteps = nOfSteps
+        print(nOfSteps)
         self.iter = 0
         self.outOfBounds = False
         self.success = False
@@ -59,13 +60,13 @@ class particle(object):
     def initiate_basic_collisions(self, ni):
         
         vmag = np.linalg.norm(self.v0)
-        tot_time = self.noOfSteps
+        tot_time = self.noOfSteps * self.dt
         
         # Doc calculated this. I don't fully understand it.
         coulomb_log = 18
-        
-        nu_d = 3.342171 * coulomb_log * ((self.q**4) / (self.m**2)) * (ni / (vmag**3))
-        
+
+        nu_d = 1.8*(10**(-7)) * ni * coulomb_log * (self.q**4) / ((self.m**(1/2)) * (vmag**(3/2)))
+        nu_d *=  self.q / (self.m * 9.58*10**7)
         print(nu_d)
         
         collision_steps = []
@@ -81,7 +82,7 @@ class particle(object):
             if step < tot_time:
                 collision_steps.append(step / self.dt)
         
-        self.collision_steps = np.array(collision_steps)
+        self.collision_steps = np.unique(np.array(collision_steps))
         self.collisions = True
         self.check_turn = False
         
@@ -132,6 +133,10 @@ class particle(object):
             self.outOfBounds = True
             return self
         
+        if self.collisions:
+            collision_counter = 0
+            tot_collisions = len(self.collision_steps)
+        
         if self.save_trajectories:
             for i in range(0, self.noOfSteps-1):
                 # check if particle is still within cube
@@ -170,11 +175,14 @@ class particle(object):
                 self.Bfield[i+1] = B(self.r[i], self.iter * self.dt)
                 
                 if self.collisions:
-                    collision_counter = 0
-                    if self.iter == self.collision_steps[collision_counter]:
-                        collision_counter += 1
-                        self.v[i+1] = self.run_collision(self.v[i+1])
-                
+                    if tot_collisions > 0:
+                        if self.iter == self.collision_steps[collision_counter]:
+                            if collision_counter != tot_collisions-1:
+                                collision_counter += 1
+                            print(self.v[i+1])
+                            self.v[i+1] = self.run_collision(self.v[i+1])
+                            print(self.v[i+1])
+                            
                 self.iter += 1
         
         elif not self.save_trajectories:
@@ -195,10 +203,11 @@ class particle(object):
                 self.r = self.r + self.dt * self.v
                 
                 if self.collisions:
-                    collision_counter = 0
-                    if self.iter == self.collision_steps[collision_counter]:
-                        collision_counter += 1
-                        self.v = self.run_collision(self.v)
+                    if tot_collisions > 0:
+                        if self.iter == self.collision_steps[collision_counter]:
+                            if collision_counter != tot_collisions:
+                                collision_counter += 1
+                            self.v = self.run_collision(self.v)
                 
                 if self.check_turn:
                     if self.positive_v0 and self.v[2] < 0:

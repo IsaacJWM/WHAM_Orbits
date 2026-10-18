@@ -97,7 +97,7 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
     
     all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, True, False, ni, s) 
             for pos, s in zip(positions, seeds)]
-    """
+    
     p = run_particle(*all_args[0])
     if p.success:
         if p.outOfBounds:
@@ -131,7 +131,7 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
             except Exception as e:
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 count += 1
-
+"""
 
 def plot_z_vs_x(file_path, savedir=None):
     file = file_path.split("/")[-1]
@@ -154,7 +154,7 @@ def plot_z_vs_t(file_path, savedir=None):
             plt.plot(list(range(len(ff[v]["r"]))), ff[v]['r'][:,2])
             plt.xlabel("Iteration")
             plt.ylabel("Z-position (normalized)")
-            #plt.title(f"File {file}, Particle number {i}")
+            plt.title(f"File {file}, Particle number {i}")
             plt.title("Position Along Axis vs Time for a Deuteron in the WHAM Field")
             if savedir != None:
                 plt.savefig(os.path.join(savedir, f"Z_vs_t_File_{file}_Vel_{i}.png"))
@@ -165,7 +165,6 @@ def plot_trajectory(file_path, savedir=None):
     file = file_path.split("/")[-1]
     with h5py.File(file_path, mode='r') as ff:
         for i, v in enumerate(ff.keys()):
-            print(ff[v]['r'][:])
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(*ff[v]['r'][:].T, c=np.arange(len(ff[v]['r'])), cmap='viridis', s=2)
