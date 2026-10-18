@@ -19,7 +19,6 @@ class particle(object):
         self.q = 1
         self.dt = dt
         self.noOfSteps = nOfSteps
-        print(nOfSteps)
         self.iter = 0
         self.outOfBounds = False
         self.success = False
@@ -67,7 +66,6 @@ class particle(object):
 
         nu_d = 1.8*(10**(-7)) * ni * coulomb_log * (self.q**4) / ((self.m**(1/2)) * (vmag**(3/2)))
         nu_d *=  self.q / (self.m * 9.58*10**7)
-        print(nu_d)
         
         collision_steps = []
         step = 0
@@ -85,8 +83,6 @@ class particle(object):
         self.collision_steps = np.unique(np.array(collision_steps))
         self.collisions = True
         self.check_turn = False
-        
-        print(self.collision_steps)
         
     def run_collision(self, v):
         speed = np.linalg.norm(v)
@@ -179,9 +175,7 @@ class particle(object):
                         if self.iter == self.collision_steps[collision_counter]:
                             if collision_counter != tot_collisions-1:
                                 collision_counter += 1
-                            print(self.v[i+1])
                             self.v[i+1] = self.run_collision(self.v[i+1])
-                            print(self.v[i+1])
                             
                 self.iter += 1
         
@@ -222,6 +216,9 @@ class particle(object):
         
         if not self.check_turn:
             self.success = True
+        
+        if self.collisions:
+            self.num_collisions = collision_counter
 
         self.iter_time = (time.time() - start) / self.iter
             

@@ -93,8 +93,10 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
     
     all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, False, False, ni, s) 
             for pos, s in zip(positions, seeds)]
-    
-    data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
+    if ni == None:
+        data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "conf", "success"])
+    else:
+        data = pd.DataFrame(index=range(nparticles), columns=["x0", "v0", "xf", "yf", "iter", "ncol", "conf", "success"])
     max_workers = int(os.environ.get('SLURM_CPUS_PER_TASK', 16))
     zs = np.array([0,0,0])
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -103,15 +105,21 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
         for future in as_completed(futures):
             try:
                 p = future.result()  # this re-raises the actual exception from the worker
-                data.loc[count] = [p.r0, p.v0, p.r, p.v, p.iter, p.outOfBounds == False, p.success]
+                if ni == None:
+                    data.loc[count] = [p.r0, p.v0, p.r, p.v, p.iter, p.outOfBounds == False, p.success]
+                else:
+                    data.loc[count] = [p.r0, p.v0, p.r, p.v, p.iter, p.num_collisions, p.outOfBounds == False, p.success]
                 count += 1
                 print(f"Finished count: {count}. Iterations: {p.iter}. Time per iteration: {p.iter_time}")
             except Exception as e:
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
-                data.loc[count] = [zs, zs, zs, zs, 0, False, False]
+                if ni == None:
+                    data.loc[count] = [zs, zs, zs, zs, 0, False, False]
+                else:
+                    data.loc[count] = [zs, zs, zs, zs, 0, 0, False, False]
                 count += 1
     
-    data.to_pickle(os.path.join(filepath, "NBI_output.pkl"))
+    data.to_pickle(os.path.join(filepath, "NBI_output_collisions_test_1.pkl"))
 
 
 def read_data(fname):
@@ -160,8 +168,11 @@ def confinement_over_time(conf, esc, smooth=True, savedir=None):
         print("Error, no particles escaped")
         return
     
-    tfinal = np.stack(conf["iter"])
     tlost = np.stack(esc["iter"])
+    if len(conf) != 0:
+        tfinal = np.stack(conf["iter"])
+    else:
+        tfinal = np.array([max(tlost)])
     
     tlost = np.sort(tlost)
     survival = 1 - np.arange(1, len(tlost) + 1) / (len(tlost) + len(tfinal))

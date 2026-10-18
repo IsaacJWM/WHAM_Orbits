@@ -97,7 +97,7 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
     
     all_args = [(pos, field, vertices, beam_v * vdir, norbits, dt, True, False, ni, s) 
             for pos, s in zip(positions, seeds)]
-    
+    """
     p = run_particle(*all_args[0])
     if p.success:
         if p.outOfBounds:
@@ -131,7 +131,6 @@ def RunNBI(nparticles, norbits, dt, field, vertices, beam_v, vdir,
             except Exception as e:
                 print(f"Particle #{count} failed with: {type(e).__name__}: {e}")
                 count += 1
-"""
 
 def plot_z_vs_x(file_path, savedir=None):
     file = file_path.split("/")[-1]

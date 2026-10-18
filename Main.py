@@ -25,8 +25,8 @@ if __name__ == "__main__":
         return x
     
     # Defining the directory where data will be stored.
-    directory = "./data/Trajectories/"
-    #directory = "./data/Firebird_runs/"
+    #directory = "./data/Trajectories/"
+    directory = "./data/Firebird_runs/"
     if not os.path.isdir(directory):
         os.mkdir(directory)
     
@@ -85,13 +85,13 @@ if __name__ == "__main__":
     #=================== NBI run ===================#
 
     # Number of particles to calculate
-    nparticles = 1
+    nparticles = 10
     
     # Number of orbits to run for each particle
-    norbits = 100000
+    norbits = 1000000
     
     # Timestep between calculations
-    dt = 0.25
+    dt = 0.1
     
     # Beam velocity and beam direction
     beam_mag = 10*T
@@ -121,19 +121,19 @@ if __name__ == "__main__":
     
     #for file in os.listdir(directory):
     #    trajectories.plot_trajectory(os.path.join(directory,file))
-    trajectories.plot_trajectory("C:/Users/iwrig/Dropbox/Summer 2026/WHAM_Orbits/data/Trajectories/NBI_trajectories_confined.h5")
-    trajectories.plot_z_vs_t("C:/Users/iwrig/Dropbox/Summer 2026/WHAM_Orbits/data/Trajectories/NBI_trajectories_confined.h5")
+    #trajectories.plot_trajectory("C:/Users/iwrig/Dropbox/Summer 2026/WHAM_Orbits/data/Trajectories/NBI_trajectories_confined.h5")
+    #trajectories.plot_z_vs_t("C:/Users/iwrig/Dropbox/Summer 2026/WHAM_Orbits/data/Trajectories/NBI_trajectories_confined.h5")
     
 
-    #conf, esc = workers.read_data(os.path.join(directory, "thermal_output.pkl"))
+    conf, esc = workers.read_data(os.path.join(directory, "NBI_output_collisions_test_1.pkl"))
     
-    #workers.plot_initial_positions(conf, esc, V, savedir="./output/")
-    #workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
+    workers.plot_initial_positions(conf, esc, V, savedir="./output/")
+    workers.plot_escaped_positions_2d(esc, V, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T), savedir="./output/")
     
-    #workers.get_fraction_lost(conf, esc)
+    workers.get_fraction_lost(conf, esc)
     #workers.confined_in_vperp_vpar_space(conf, esc, savedir="./output/")
-    #workers.confinement_over_time(conf, esc, savedir="./output/")
-    #workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
+    workers.confinement_over_time(conf, esc, smooth=False, savedir="./output/")
+    workers.plot_confinement_with_fieldlines(conf, esc, field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0), savedir="./output/")
     #workers.plot_confined_by_pitch_angle(conf, esc, savedir="./output/")
     
     #workers.plot_3d_fieldlines(field_data.field, scale=(scale/0.000102)*np.sqrt(m*T) / (q*B0))
